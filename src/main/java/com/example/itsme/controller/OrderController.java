@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.itsme.domain.Menu;
 import com.example.itsme.domain.Order;
 import com.example.itsme.domain.OrderItem;
-import com.example.itsme.domain.OrderStatus;
 import com.example.itsme.domain.Store;
 import com.example.itsme.domain.User;
 import com.example.itsme.dto.OrderItemRequest;
