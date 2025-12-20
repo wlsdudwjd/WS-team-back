@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -46,7 +47,17 @@ public class OrderController {
 	private final MenuRepository menuRepository;
 
 	@GetMapping
-	public List<Order> getOrders() {
+	public List<Order> getOrders(@RequestParam(required = false) Long userId,
+			@RequestParam(required = false) Long storeId) {
+		if (userId != null && storeId != null) {
+			return orderRepository.findByUserUserIdAndStoreStoreId(userId, storeId);
+		}
+		if (userId != null) {
+			return orderRepository.findByUserUserId(userId);
+		}
+		if (storeId != null) {
+			return orderRepository.findByStoreStoreId(storeId);
+		}
 		return orderRepository.findAll();
 	}
 

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,7 +38,14 @@ public class PaymentController {
 	private final OrderRepository orderRepository;
 
 	@GetMapping
-	public List<Payment> getPayments() {
+	public List<Payment> getPayments(@RequestParam(required = false) Long userId,
+			@RequestParam(required = false) Long orderId) {
+		if (userId != null) {
+			return paymentRepository.findByUserUserId(userId);
+		}
+		if (orderId != null) {
+			return paymentRepository.findByOrderOrderId(orderId);
+		}
 		return paymentRepository.findAll();
 	}
 

@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Index;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -23,7 +24,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "menu")
+@Table(name = "menu", indexes = {
+		@Index(name = "idx_menu_store_id", columnList = "store_id"),
+		@Index(name = "idx_menu_category_id", columnList = "category_id")
+})
 public class Menu {
 
 	@Id

@@ -9,6 +9,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Index;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,7 +23,14 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "user_coupon")
+@Table(name = "user_coupon",
+		uniqueConstraints = {
+				@UniqueConstraint(name = "uk_user_coupon_user_coupon", columnNames = { "user_id", "coupon_id" })
+		},
+		indexes = {
+				@Index(name = "idx_user_coupon_user_id", columnList = "user_id"),
+				@Index(name = "idx_user_coupon_coupon_id", columnList = "coupon_id")
+		})
 public class UserCoupon {
 
 	@Id
@@ -37,6 +46,7 @@ public class UserCoupon {
 	@JoinColumn(name = "coupon_id")
 	private Coupon coupon;
 
-	@Column(name = "is_valid")
-	private Boolean isValid;
+	@Builder.Default
+	@Column(name = "is_valid", nullable = false)
+	private Boolean isValid = true;
 }

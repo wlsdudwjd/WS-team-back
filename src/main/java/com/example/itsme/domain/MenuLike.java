@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
+import jakarta.persistence.Index;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -24,7 +25,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "menu_likes")
+@Table(name = "menu_likes", indexes = {
+		@Index(name = "idx_menu_likes_user_id", columnList = "user_id"),
+		@Index(name = "idx_menu_likes_menu_id", columnList = "menu_id")
+})
 public class MenuLike {
 
 	@EmbeddedId
@@ -41,6 +45,6 @@ public class MenuLike {
 	private Menu menu;
 
 	@CreationTimestamp
-	@Column(name = "created_at", updatable = false)
+	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;
 }

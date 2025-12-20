@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,7 +38,17 @@ public class MenuController {
 	private final MenuCategoryRepository menuCategoryRepository;
 
 	@GetMapping
-	public List<Menu> getMenus() {
+	public List<Menu> getMenus(@RequestParam(required = false) Long storeId,
+			@RequestParam(required = false) Long categoryId) {
+		if (storeId != null && categoryId != null) {
+			return menuRepository.findByStoreStoreIdAndCategoryMenuCategoryId(storeId, categoryId);
+		}
+		if (storeId != null) {
+			return menuRepository.findByStoreStoreId(storeId);
+		}
+		if (categoryId != null) {
+			return menuRepository.findByCategoryMenuCategoryId(categoryId);
+		}
 		return menuRepository.findAll();
 	}
 

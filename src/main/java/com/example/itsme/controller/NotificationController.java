@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,8 +34,11 @@ public class NotificationController {
 	private final UserRepository userRepository;
 
 	@GetMapping
-	public List<Notification> getNotifications() {
-		return notificationRepository.findAll();
+	public List<Notification> getNotifications(@RequestParam(required = false) Long userId) {
+		if (userId == null) {
+			return notificationRepository.findAll();
+		}
+		return notificationRepository.findByUserUserId(userId);
 	}
 
 	@GetMapping("/{id}")

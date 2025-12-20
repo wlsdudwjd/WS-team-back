@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,7 +38,14 @@ public class MenuLikeController {
 	private final MenuRepository menuRepository;
 
 	@GetMapping
-	public List<MenuLike> getLikes() {
+	public List<MenuLike> getLikes(@RequestParam(required = false) Long userId,
+			@RequestParam(required = false) Long menuId) {
+		if (userId != null) {
+			return menuLikeRepository.findByUserUserId(userId);
+		}
+		if (menuId != null) {
+			return menuLikeRepository.findByMenuMenuId(menuId);
+		}
 		return menuLikeRepository.findAll();
 	}
 

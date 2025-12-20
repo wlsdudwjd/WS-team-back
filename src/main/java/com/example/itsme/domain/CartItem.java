@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Index;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -27,9 +28,14 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "cart_item", uniqueConstraints = {
-		@UniqueConstraint(name = "uk_cart_item_cart_menu", columnNames = { "cart_id", "menu_id" })
-})
+@Table(name = "cart_item",
+		uniqueConstraints = {
+				@UniqueConstraint(name = "uk_cart_item_cart_menu", columnNames = { "cart_id", "menu_id" })
+		},
+		indexes = {
+				@Index(name = "idx_cart_item_cart_id", columnList = "cart_id"),
+				@Index(name = "idx_cart_item_menu_id", columnList = "menu_id")
+		})
 public class CartItem {
 
 	@Id
@@ -50,6 +56,6 @@ public class CartItem {
 	private Integer quantity;
 
 	@CreationTimestamp
-	@Column(name = "created_at", updatable = false)
+	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;
 }

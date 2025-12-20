@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Index;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,7 +27,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "payments")
+@Table(name = "payments", indexes = {
+		@Index(name = "idx_payments_user_id", columnList = "user_id"),
+		@Index(name = "idx_payments_order_id", columnList = "order_id")
+})
 public class Payment {
 
 	@Id
@@ -42,14 +46,15 @@ public class Payment {
 	@JoinColumn(name = "order_id")
 	private Order order;
 
-	@Column(name = "method")
-	private String method;
+	@NotNull
+	@Column(name = "method", nullable = false)
+	private Integer method;
 
 	@NotNull
 	@Column(nullable = false)
 	private Integer amount;
 
 	@CreationTimestamp
-	@Column(name = "created_at", updatable = false)
+	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;
 }

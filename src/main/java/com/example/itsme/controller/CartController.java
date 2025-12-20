@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,8 +34,11 @@ public class CartController {
 	private final UserRepository userRepository;
 
 	@GetMapping
-	public List<Cart> getCarts() {
-		return cartRepository.findAll();
+	public List<Cart> getCarts(@RequestParam(required = false) Long userId) {
+		if (userId == null) {
+			return cartRepository.findAll();
+		}
+		return cartRepository.findByUserUserId(userId);
 	}
 
 	@GetMapping("/{id}")
