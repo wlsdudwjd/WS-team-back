@@ -70,6 +70,16 @@ public class MenuController {
 		return menuRepository.save(menu);
 	}
 
+	@PostMapping("/ensure")
+	@ResponseStatus(HttpStatus.CREATED)
+	public Menu ensureMenu(@Valid @RequestBody MenuRequest request) {
+		var existing = menuRepository.findByStoreStoreIdAndName(request.storeId(), request.name());
+		if (existing.isPresent()) {
+			return existing.get();
+		}
+		return createMenu(request);
+	}
+
 	@PutMapping("/{id}")
 	public Menu updateMenu(@PathVariable Long id, @Valid @RequestBody MenuRequest request) {
 		Menu menu = fetchMenu(id);

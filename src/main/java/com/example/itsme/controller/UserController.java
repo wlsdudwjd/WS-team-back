@@ -19,6 +19,8 @@ import com.example.itsme.dto.UserRequest;
 import com.example.itsme.exception.ResourceNotFoundException;
 import com.example.itsme.repository.UserRepository;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -26,22 +28,26 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Users", description = "User CRUD. Email is the login identifier.")
 public class UserController {
 
 	private final UserRepository userRepository;
 
 	@GetMapping
+	@Operation(summary = "List users")
 	public List<User> getUsers() {
 		return userRepository.findAll();
 	}
 
 	@GetMapping("/{id}")
+	@Operation(summary = "Get user by id")
 	public User getUser(@PathVariable Long id) {
 		return fetchUser(id);
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
+	@Operation(summary = "Create user (signup)", description = "Registers a new user. Email must be unique and is used for login.")
 	public User createUser(@Valid @RequestBody UserRequest request) {
 		User user = User.builder()
 				.password(request.password())
@@ -53,6 +59,7 @@ public class UserController {
 	}
 
 	@PutMapping("/{id}")
+	@Operation(summary = "Update user")
 	public User updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest request) {
 		User user = fetchUser(id);
 		user.setPassword(request.password());
@@ -64,6 +71,7 @@ public class UserController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@Operation(summary = "Delete user")
 	public void deleteUser(@PathVariable Long id) {
 		User user = fetchUser(id);
 		userRepository.delete(user);

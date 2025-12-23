@@ -10,9 +10,11 @@ public class WebConfig implements WebMvcConfigurer {
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
 		registry.addMapping("/api/**")
-				.allowedOrigins(
-						"http://localhost:5173",
-						"http://localhost:4173")
+				// 허용 오리진 확장: 로컬 개발 포트 전반과 배포 도메인까지 받을 수 있도록 패턴 허용
+				.allowedOriginPatterns(
+						"http://localhost:*",
+						"http://127.0.0.1:*",
+						"https://*")
 				.allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
 				.allowedHeaders("*")
 				.allowCredentials(true)
