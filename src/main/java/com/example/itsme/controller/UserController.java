@@ -11,10 +11,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.itsme.domain.User;
+import com.example.itsme.dto.UserProfileResponse;
 import com.example.itsme.dto.UserRequest;
 import com.example.itsme.exception.ResourceNotFoundException;
 import com.example.itsme.repository.UserRepository;
@@ -43,6 +45,14 @@ public class UserController {
 	@Operation(summary = "Get user by id")
 	public User getUser(@PathVariable Long id) {
 		return fetchUser(id);
+	}
+
+	@GetMapping(params = "email")
+	@Operation(summary = "Get user by email", description = "Lookup user by email. Useful for showing profile info after login.")
+	public UserProfileResponse getUserByEmail(@RequestParam String email) {
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found for email: " + email));
+		return UserProfileResponse.from(user);
 	}
 
 	@PostMapping
