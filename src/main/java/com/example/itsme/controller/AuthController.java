@@ -88,20 +88,60 @@ public class AuthController {
 		}
 
 		User user = userRepository.findByEmail(firebaseUser.email())
-				.orElseGet(() -> createUserFromFirebase(firebaseUser));
+				.orElseGet(() -> createUserFromFirebase(firebaseUser, request));
+
+		// 프로필이 비어 있을 때, 요청으로 받은 값으로 채워주기 (최소한 한 번은 채워지도록)
+		boolean updated = false;
+		if ((user.getName() == null || user.getName().isBlank())
+				&& request.name() != null && !request.name().isBlank()) {
+			user.setName(request.name());
+			updated = true;
+		}
+		if ((user.getPhone() == null || user.getPhone().isBlank())
+				&& request.phone() != null && !request.phone().isBlank()) {
+			user.setPhone(request.phone());
+			updated = true;
+		}
+		if (updated) {
+			userRepository.save(user);
+		}
 
 		return new AuthResponse(user.getUserId(), user.getUsername(), user.getEmail(), user.getName());
 	}
 
-	private User createUserFromFirebase(FirebaseUser firebaseUser) {
+	private User createUserFromFirebase(FirebaseUser firebaseUser, FirebaseLoginRequest request) {
+		String email = firebaseUser.email();
+		String emailLocalPart = email != null && email.contains("@")
+				? email.substring(0, email.indexOf("@"))
+				: "firebase_" + firebaseUser.uid();
+
+		// 요청으로 온 username/name/phone 우선 적용, 없으면 토큰/기본값
+		String requestedUsername = request.username();
+		String requestedName = request.name();
+		String requestedPhone = request.phone();
+
+		// username 우선순위: 요청 > 이메일 앞부분 > uid
+		String usernameToUse = (requestedUsername != null && !requestedUsername.isBlank())
+				? requestedUsername
+				: emailLocalPart;
+
+		// name 우선순위: 요청 > displayName > 이메일 앞부분
+		String displayName = firebaseUser.displayName();
+		String nameToUse = (requestedName != null && !requestedName.isBlank())
+				? requestedName
+				: (displayName != null && !displayName.isBlank() ? displayName : emailLocalPart);
+
+		// phone 우선순위: 요청 > 토큰
+		String phoneToUse = (requestedPhone != null && !requestedPhone.isBlank())
+				? requestedPhone
+				: firebaseUser.phoneNumber();
+
 		User newUser = User.builder()
-				.email(firebaseUser.email())
-				.username("firebase_" + firebaseUser.uid())
+				.email(email)
+				.username(usernameToUse)
 				.password(passwordService.hash("firebase")) // Firebase manages credentials
-				.name(firebaseUser.displayName() != null && !firebaseUser.displayName().isBlank()
-						? firebaseUser.displayName()
-						: firebaseUser.email())
-				.phone(firebaseUser.phoneNumber())
+				.name(nameToUse)
+				.phone(phoneToUse)
 				.build();
 		return userRepository.save(newUser);
 	}

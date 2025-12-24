@@ -170,6 +170,8 @@ public class MenuLikeController {
 		if (!menuLikeRepository.existsById(id)) {
 			throw new ResourceNotFoundException("Menu like not found for user %d and menu %d".formatted(userId, menuId));
 		}
+		// 좋아요 삭제 시 인기 통계도 함께 감소시킨다.
+		menuRepository.findById(menuId).ifPresent(menu -> incrementTodayStat(menu, -1));
 		menuLikeRepository.deleteById(id);
 	}
 
@@ -214,7 +216,8 @@ public class MenuLikeController {
 		LocalDate today = LocalDate.now();
 		menuRecommendationStatRepository.findByMenuMenuIdAndStatDate(menu.getMenuId(), today)
 				.map(stat -> {
-					stat.setTotalCount(stat.getTotalCount() + delta);
+					int newCount = stat.getTotalCount() + delta;
+					stat.setTotalCount(Math.max(newCount, 0)); // 음수 방지
 					return menuRecommendationStatRepository.save(stat);
 				})
 				.orElseGet(() -> menuRecommendationStatRepository.save(MenuRecommendationStat.builder()
