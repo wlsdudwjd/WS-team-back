@@ -3,14 +3,20 @@ package com.example.itsme.config;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
-/**
- * Forwards non-API routes to index.html so the SPA can handle routing.
- */
 @Controller
 public class SpaForwardController {
 
-	@GetMapping("/{path:^(?!api|actuator|v3|swagger-ui|webjars|error).*$}")
+	// Match a path segment that is not an API/static prefix and contains no dots
+	private static final String SPA_PATH_SEGMENT_REGEX =
+			"^(?!api$)(?!actuator$)(?!v3$)(?!swagger-ui$)(?!webjars$)(?!error$)(?!assets$)[^\\.]*";
+
+	@GetMapping({
+			"/",
+			"/{path:" + SPA_PATH_SEGMENT_REGEX + "}",
+			"/{path:" + SPA_PATH_SEGMENT_REGEX + "}/**"
+	})
 	public String forward() {
-		return "forward:/";
+		// Forward directly to the static index.html to avoid recursive dispatch.
+		return "forward:/index.html";
 	}
 }
