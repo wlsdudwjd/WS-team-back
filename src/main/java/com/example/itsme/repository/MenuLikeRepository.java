@@ -1,6 +1,7 @@
 package com.example.itsme.repository;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +13,8 @@ public interface MenuLikeRepository extends JpaRepository<MenuLike, MenuLikeId> 
 	List<MenuLike> findByUserUserId(Long userId);
 
 	List<MenuLike> findByMenuMenuId(Long menuId);
+
+	List<MenuLike> findByUserUserIdAndMenuMenuIdIn(Long userId, Set<Long> menuIds);
 
 	interface MenuLikeCountProjection {
 		Long getMenuId();

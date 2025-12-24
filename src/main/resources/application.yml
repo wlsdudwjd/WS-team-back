@@ -28,3 +28,9 @@ logging:
         orm:
           jdbc:
             bind: TRACE
+
+firebase:
+  # Base64-encoded Firebase service account JSON string.
+  service-account-base64: ${FIREBASE_CREDENTIALS_BASE64:}
+  # Absolute path to service account JSON file (use when base64 is too long for env vars)
+  service-account-path: ${FIREBASE_CREDENTIALS_PATH:C:/Users/my-ju/Downloads/itsme-51f75-firebase-adminsdk-fbsvc-0f36415bdf.json}

@@ -3,7 +3,9 @@ package com.example.itsme.controller;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -27,7 +29,9 @@ import com.example.itsme.domain.User;
 import com.example.itsme.dto.MenuLikeRequest;
 import com.example.itsme.dto.MenuLikeCountResponse;
 import com.example.itsme.dto.PopularMenuResponse;
+import com.example.itsme.dto.MenuLikeStatusResponse;
 import com.example.itsme.exception.ResourceNotFoundException;
+import com.example.itsme.repository.MenuLikeRepository.MenuLikeCountProjection;
 import com.example.itsme.repository.MenuLikeRepository;
 import com.example.itsme.repository.MenuRecommendationStatRepository;
 import com.example.itsme.repository.MenuRepository;
@@ -91,6 +95,35 @@ public class MenuLikeController {
 				.toList();
 	}
 
+	@GetMapping("/status")
+	public List<MenuLikeStatusResponse> getStatuses(
+			@RequestParam(required = false) Long userId,
+			@RequestParam(required = false) String userEmail,
+			@RequestParam(required = false) List<Long> menuIds) {
+		User user = resolveUserByIdentifier(userId, userEmail);
+		List<Long> normalizedMenuIds = normalizeMenuIds(menuIds);
+		if (normalizedMenuIds == null || normalizedMenuIds.isEmpty()) {
+			throw new IllegalArgumentException("menuIds is required");
+		}
+
+		var likeSet = menuLikeRepository.findByUserUserIdAndMenuMenuIdIn(user.getUserId(),
+						Set.copyOf(normalizedMenuIds))
+				.stream()
+				.map(ml -> ml.getMenu().getMenuId())
+				.collect(Collectors.toSet());
+
+		var totalCounts = menuLikeRepository.countByMenuIds(normalizedMenuIds)
+				.stream()
+				.collect(Collectors.toMap(MenuLikeCountProjection::getMenuId, MenuLikeCountProjection::getLikeCount));
+
+		return normalizedMenuIds.stream()
+				.map(menuId -> new MenuLikeStatusResponse(
+						menuId,
+						likeSet.contains(menuId),
+						totalCounts.getOrDefault(menuId, 0L)))
+				.toList();
+	}
+
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public MenuLike likeMenu(@Valid @RequestBody MenuLikeRequest request) {
@@ -134,6 +167,17 @@ public class MenuLikeController {
 	private User fetchUser(Long id) {
 		return userRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+	}
+
+	private User resolveUserByIdentifier(Long userId, String userEmail) {
+		if (userId != null) {
+			return fetchUser(userId);
+		}
+		if (userEmail != null && !userEmail.isBlank()) {
+			return userRepository.findByEmail(userEmail)
+					.orElseThrow(() -> new ResourceNotFoundException("User not found for email: " + userEmail));
+		}
+		throw new ResourceNotFoundException("User identifier is required (userId or userEmail)");
 	}
 
 	private User resolveUser(MenuLikeRequest request) {

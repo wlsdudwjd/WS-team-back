@@ -39,12 +39,20 @@ public class MenuController {
 
 	@GetMapping
 	public List<Menu> getMenus(@RequestParam(required = false) Long storeId,
-			@RequestParam(required = false) Long categoryId) {
+			@RequestParam(required = false) Long categoryId,
+			@RequestParam(required = false) Long serviceTypeId) {
+		// 우선순위: 매장+카테고리 > 매장 > 카테고리+서비스타입 > 서비스타입 > 카테고리 > 전체
 		if (storeId != null && categoryId != null) {
 			return menuRepository.findByStoreStoreIdAndCategoryMenuCategoryId(storeId, categoryId);
 		}
 		if (storeId != null) {
 			return menuRepository.findByStoreStoreId(storeId);
+		}
+		if (categoryId != null && serviceTypeId != null) {
+			return menuRepository.findByCategoryMenuCategoryIdAndStoreServiceTypeServiceTypeId(categoryId, serviceTypeId);
+		}
+		if (serviceTypeId != null) {
+			return menuRepository.findByStoreServiceTypeServiceTypeId(serviceTypeId);
 		}
 		if (categoryId != null) {
 			return menuRepository.findByCategoryMenuCategoryId(categoryId);

@@ -10,10 +10,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.example.itsme.domain.User;
 import com.example.itsme.dto.AuthResponse;
+import com.example.itsme.dto.FirebaseLoginRequest;
 import com.example.itsme.dto.LoginRequest;
 import com.example.itsme.dto.UserRequest;
 import com.example.itsme.exception.ResourceNotFoundException;
 import com.example.itsme.repository.UserRepository;
+import com.example.itsme.service.FirebaseAuthService;
+import com.example.itsme.service.FirebaseUser;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
 	private final UserRepository userRepository;
+	private final FirebaseAuthService firebaseAuthService;
 
 	@PostMapping("/login")
 	@ResponseStatus(HttpStatus.OK)
@@ -58,5 +62,33 @@ public class AuthController {
 
 		User saved = userRepository.save(user);
 		return new AuthResponse(saved.getUserId(), saved.getUsername(), saved.getEmail(), saved.getName());
+	}
+
+	@PostMapping("/firebase-login")
+	@ResponseStatus(HttpStatus.OK)
+	@Operation(summary = "Login with Firebase ID token", description = "Verifies Firebase ID token, syncs user in DB, and returns profile.")
+	public AuthResponse firebaseLogin(@Valid @RequestBody FirebaseLoginRequest request) {
+		FirebaseUser firebaseUser = firebaseAuthService.verify(request.idToken());
+		if (firebaseUser.email() == null || firebaseUser.email().isBlank()) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Firebase token missing email");
+		}
+
+		User user = userRepository.findByEmail(firebaseUser.email())
+				.orElseGet(() -> createUserFromFirebase(firebaseUser));
+
+		return new AuthResponse(user.getUserId(), user.getUsername(), user.getEmail(), user.getName());
+	}
+
+	private User createUserFromFirebase(FirebaseUser firebaseUser) {
+		User newUser = User.builder()
+				.email(firebaseUser.email())
+				.username("firebase_" + firebaseUser.uid())
+				.password("firebase") // Firebase manages credentials
+				.name(firebaseUser.displayName() != null && !firebaseUser.displayName().isBlank()
+						? firebaseUser.displayName()
+						: firebaseUser.email())
+				.phone(firebaseUser.phoneNumber())
+				.build();
+		return userRepository.save(newUser);
 	}
 }
