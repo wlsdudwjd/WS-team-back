@@ -23,6 +23,8 @@ import com.example.itsme.exception.ResourceNotFoundException;
 import com.example.itsme.repository.CartItemRepository;
 import com.example.itsme.repository.CartRepository;
 import com.example.itsme.repository.MenuRepository;
+import com.example.itsme.repository.UserRepository;
+import com.example.itsme.domain.User;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,7 @@ public class CartItemController {
 	private final CartItemRepository cartItemRepository;
 	private final CartRepository cartRepository;
 	private final MenuRepository menuRepository;
+	private final UserRepository userRepository;
 
 	@GetMapping("/cart/{cartId}")
 	public List<CartItem> getItemsByCart(@PathVariable Long cartId) {
@@ -52,6 +55,12 @@ public class CartItemController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public CartItem createOrIncrement(@Valid @RequestBody CartItemRequest request) {
 		Cart cart = fetchCart(request.cartId());
+		if (request.userId() != null || (request.userEmail() != null && !request.userEmail().isBlank())) {
+			User owner = resolveUser(request.userId(), request.userEmail());
+			if (!cart.getUser().getUserId().equals(owner.getUserId())) {
+				throw new ResourceNotFoundException("Cart does not belong to user: " + owner.getUserId());
+			}
+		}
 		Menu menu = fetchMenu(request.menuId());
 		return cartItemRepository.findByCartCartIdAndMenuMenuId(cart.getCartId(), menu.getMenuId())
 				.map(existing -> {
@@ -96,5 +105,17 @@ public class CartItemController {
 	private Menu fetchMenu(Long id) {
 		return menuRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Menu not found: " + id));
+	}
+
+	private User resolveUser(Long userId, String userEmail) {
+		if (userId != null) {
+			return userRepository.findById(userId)
+					.orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+		}
+		if (userEmail != null && !userEmail.isBlank()) {
+			return userRepository.findByEmail(userEmail)
+					.orElseThrow(() -> new ResourceNotFoundException("User not found: " + userEmail));
+		}
+		throw new ResourceNotFoundException("User identifier required");
 	}
 }
