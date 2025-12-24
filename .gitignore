@@ -40,3 +40,7 @@ out/
 
 application.properties
 application.yml
+
+firebase-adminsdk.json
+
+src/main/resources/static
