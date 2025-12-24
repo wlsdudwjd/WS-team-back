@@ -7,9 +7,11 @@ import com.example.itsme.domain.OrderStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Email;
 
 public record OrderRequest(
-		@NotNull Long userId,
+		Long userId,
+		@Email String userEmail,
 		@NotNull Long storeId,
 		@NotNull OrderStatus status,
 		@NotNull Integer totalPrice,

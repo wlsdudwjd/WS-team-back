@@ -49,16 +49,11 @@ public class OrderController {
 	@GetMapping
 	public List<Order> getOrders(@RequestParam(required = false) Long userId,
 			@RequestParam(required = false) Long storeId) {
-		if (userId != null && storeId != null) {
-			return orderRepository.findByUserUserIdAndStoreStoreId(userId, storeId);
-		}
-		if (userId != null) {
-			return orderRepository.findByUserUserId(userId);
-		}
+		User user = resolveUser(userId, null);
 		if (storeId != null) {
-			return orderRepository.findByStoreStoreId(storeId);
+			return orderRepository.findByUserUserIdAndStoreStoreId(user.getUserId(), storeId);
 		}
-		return orderRepository.findAll();
+		return orderRepository.findByUserUserId(user.getUserId());
 	}
 
 	@GetMapping("/{id}")
@@ -71,7 +66,7 @@ public class OrderController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public Order createOrder(@Valid @RequestBody OrderRequest request) {
 		Order order = Order.builder()
-				.user(fetchUser(request.userId()))
+				.user(resolveUser(request.userId(), request.userEmail()))
 				.store(fetchStore(request.storeId()))
 				.status(request.status())
 				.totalPrice(request.totalPrice())
@@ -100,9 +95,16 @@ public class OrderController {
 				.orElseThrow(() -> new ResourceNotFoundException("Order not found: " + id));
 	}
 
-	private User fetchUser(Long id) {
-		return userRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+	private User resolveUser(Long id, String email) {
+		if (id != null) {
+			return userRepository.findById(id)
+					.orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+		}
+		if (email != null && !email.isBlank()) {
+			return userRepository.findByEmail(email)
+					.orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
+		}
+		throw new ResourceNotFoundException("User identifier is required");
 	}
 
 	private Store fetchStore(Long id) {

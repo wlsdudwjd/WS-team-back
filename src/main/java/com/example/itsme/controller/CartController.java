@@ -34,11 +34,10 @@ public class CartController {
 	private final UserRepository userRepository;
 
 	@GetMapping
-	public List<Cart> getCarts(@RequestParam(required = false) Long userId) {
-		if (userId == null) {
-			return cartRepository.findAll();
-		}
-		return cartRepository.findByUserUserId(userId);
+	public List<Cart> getCarts(@RequestParam(required = false) Long userId,
+			@RequestParam(required = false) String userEmail) {
+		User user = resolveUser(userId, userEmail);
+		return cartRepository.findByUserUserId(user.getUserId());
 	}
 
 	@GetMapping("/{id}")
@@ -49,7 +48,7 @@ public class CartController {
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public Cart createCart(@Valid @RequestBody CartRequest request) {
-		User user = fetchUser(request.userId());
+		User user = resolveUser(request.userId(), request.userEmail());
 		Cart cart = Cart.builder()
 				.user(user)
 				.build();
@@ -68,8 +67,15 @@ public class CartController {
 				.orElseThrow(() -> new ResourceNotFoundException("Cart not found: " + id));
 	}
 
-	private User fetchUser(Long id) {
-		return userRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+	private User resolveUser(Long userId, String userEmail) {
+		if (userId != null) {
+			return userRepository.findById(userId)
+					.orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+		}
+		if (userEmail != null && !userEmail.isBlank()) {
+			return userRepository.findByEmail(userEmail)
+					.orElseThrow(() -> new ResourceNotFoundException("User not found: " + userEmail));
+		}
+		throw new ResourceNotFoundException("User identifier required");
 	}
 }
