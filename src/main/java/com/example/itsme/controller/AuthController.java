@@ -17,6 +17,7 @@ import com.example.itsme.exception.ResourceNotFoundException;
 import com.example.itsme.repository.UserRepository;
 import com.example.itsme.service.FirebaseAuthService;
 import com.example.itsme.service.FirebaseUser;
+import com.example.itsme.service.PasswordService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,6 +32,7 @@ public class AuthController {
 
 	private final UserRepository userRepository;
 	private final FirebaseAuthService firebaseAuthService;
+	private final PasswordService passwordService;
 
 	@PostMapping("/login")
 	@ResponseStatus(HttpStatus.OK)
@@ -38,7 +40,19 @@ public class AuthController {
 	public AuthResponse login(@Valid @RequestBody LoginRequest request) {
 		User user = userRepository.findByEmail(request.email())
 				.orElseThrow(() -> new ResourceNotFoundException("User not found for email: " + request.email()));
-		if (!user.getPassword().equals(request.password())) {
+		if (passwordService.isHashed(user.getPassword())) {
+			if (!passwordService.matches(request.password(), user.getPassword())) {
+				throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+			}
+		}
+		else {
+			if (!user.getPassword().equals(request.password())) {
+				throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+			}
+			user.setPassword(passwordService.hash(request.password()));
+			userRepository.save(user);
+		}
+		if (user.getPassword() == null || user.getPassword().isBlank()) {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
 		}
 		return new AuthResponse(user.getUserId(), user.getUsername(), user.getEmail(), user.getName());
@@ -55,7 +69,7 @@ public class AuthController {
 		User user = User.builder()
 				.email(request.email())
 				.username(request.username())
-				.password(request.password())
+				.password(passwordService.hash(request.password()))
 				.name(request.name())
 				.phone(request.phone())
 				.build();
@@ -83,7 +97,7 @@ public class AuthController {
 		User newUser = User.builder()
 				.email(firebaseUser.email())
 				.username("firebase_" + firebaseUser.uid())
-				.password("firebase") // Firebase manages credentials
+				.password(passwordService.hash("firebase")) // Firebase manages credentials
 				.name(firebaseUser.displayName() != null && !firebaseUser.displayName().isBlank()
 						? firebaseUser.displayName()
 						: firebaseUser.email())
