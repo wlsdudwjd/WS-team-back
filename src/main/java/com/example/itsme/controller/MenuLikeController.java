@@ -144,6 +144,7 @@ public class MenuLikeController {
 			return userRepository.findByEmail(request.userEmail())
 					.orElseGet(() -> userRepository.save(User.builder()
 							.email(request.userEmail())
+							.username(request.userEmail())
 							.password(UUID.randomUUID().toString())
 							.name(request.userEmail())
 							.build()));

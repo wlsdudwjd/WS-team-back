@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 public record UserRequest(
 		@Schema(example = "plain-text-password")
 		@NotBlank String password,
+		@Schema(description = "User-chosen login id (must be unique)", example = "saim0807_1")
+		@NotBlank String username,
 		@Schema(description = "Login identifier (must be unique email)", example = "user@example.com")
 		@NotBlank @Email String email,
 		@Schema(example = "홍길동")

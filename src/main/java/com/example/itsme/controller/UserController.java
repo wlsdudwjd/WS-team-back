@@ -60,6 +60,7 @@ public class UserController {
 	@Operation(summary = "Create user (signup)", description = "Registers a new user. Email must be unique and is used for login.")
 	public User createUser(@Valid @RequestBody UserRequest request) {
 		User user = User.builder()
+				.username(request.username())
 				.password(request.password())
 				.email(request.email())
 				.name(request.name())
@@ -72,6 +73,7 @@ public class UserController {
 	@Operation(summary = "Update user")
 	public User updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest request) {
 		User user = fetchUser(id);
+		user.setUsername(request.username());
 		user.setPassword(request.password());
 		user.setEmail(request.email());
 		user.setName(request.name());

@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.example.itsme.domain.User;
 import com.example.itsme.dto.AuthResponse;
 import com.example.itsme.dto.LoginRequest;
+import com.example.itsme.dto.UserRequest;
 import com.example.itsme.exception.ResourceNotFoundException;
 import com.example.itsme.repository.UserRepository;
 
@@ -36,6 +37,26 @@ public class AuthController {
 		if (!user.getPassword().equals(request.password())) {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
 		}
-		return new AuthResponse(user.getUserId(), user.getEmail(), user.getName());
+		return new AuthResponse(user.getUserId(), user.getUsername(), user.getEmail(), user.getName());
+	}
+
+	@PostMapping("/signup")
+	@ResponseStatus(HttpStatus.CREATED)
+	@Operation(summary = "Signup with email/password", description = "Creates a user with the provided email, password, name, phone. Email must be unique.")
+	public AuthResponse signup(@Valid @RequestBody UserRequest request) {
+		if (userRepository.existsByEmail(request.email())) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists: " + request.email());
+		}
+
+		User user = User.builder()
+				.email(request.email())
+				.username(request.username())
+				.password(request.password())
+				.name(request.name())
+				.phone(request.phone())
+				.build();
+
+		User saved = userRepository.save(user);
+		return new AuthResponse(saved.getUserId(), saved.getUsername(), saved.getEmail(), saved.getName());
 	}
 }

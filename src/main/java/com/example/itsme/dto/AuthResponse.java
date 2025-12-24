@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record AuthResponse(
 		@Schema(description = "Internal user id", example = "1")
 		Long userId,
+		@Schema(description = "User-chosen login id (username)", example = "saim0807_1")
+		String loginId,
 		@Schema(description = "Login email", example = "user@example.com")
 		String email,
 		@Schema(description = "Display name", example = "홍길동")
