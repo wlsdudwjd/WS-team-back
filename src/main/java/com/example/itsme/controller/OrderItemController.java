@@ -25,6 +25,7 @@ import com.example.itsme.repository.OrderItemRepository;
 import com.example.itsme.repository.OrderRepository;
 import com.example.itsme.repository.UserRepository;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -32,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/order-items")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Order Items", description = "Items belonging to an order")
 public class OrderItemController {
 
 	private final OrderItemRepository orderItemRepository;

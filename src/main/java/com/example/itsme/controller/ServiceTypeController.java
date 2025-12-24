@@ -19,6 +19,7 @@ import com.example.itsme.dto.ServiceTypeRequest;
 import com.example.itsme.exception.ResourceNotFoundException;
 import com.example.itsme.repository.ServiceTypeRepository;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -26,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/service-types")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Service Types", description = "Service types (e.g., cafe, cafeteria)")
 public class ServiceTypeController {
 
 	private final ServiceTypeRepository serviceTypeRepository;

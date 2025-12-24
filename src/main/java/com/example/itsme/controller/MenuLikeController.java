@@ -37,6 +37,8 @@ import com.example.itsme.repository.MenuRecommendationStatRepository;
 import com.example.itsme.repository.MenuRepository;
 import com.example.itsme.repository.UserRepository;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -44,6 +46,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/menu-likes")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Menu Likes & Recommendations", description = "Likes, counts, and recommended menus")
 public class MenuLikeController {
 
 	private final MenuLikeRepository menuLikeRepository;
@@ -52,6 +55,7 @@ public class MenuLikeController {
 	private final MenuRepository menuRepository;
 
 	@GetMapping
+	@Operation(summary = "좋아요 목록 조회", description = "조건에 따라 사용자별 또는 메뉴별 좋아요 기록을 조회합니다.")
 	public List<MenuLike> getLikes(@RequestParam(required = false) Long userId,
 			@RequestParam(required = false) Long menuId) {
 		if (userId != null) {
@@ -64,6 +68,7 @@ public class MenuLikeController {
 	}
 
 	@GetMapping("/counts")
+	@Operation(summary = "메뉴별 좋아요 수 조회", description = "주어진 메뉴 목록 혹은 전체 메뉴의 좋아요 개수를 반환합니다.")
 	public List<MenuLikeCountResponse> getLikeCounts(@RequestParam(required = false) List<Long> menuIds) {
 		List<Long> normalizedMenuIds = normalizeMenuIds(menuIds);
 		var projections = (normalizedMenuIds == null || normalizedMenuIds.isEmpty())
@@ -76,6 +81,7 @@ public class MenuLikeController {
 	}
 
 	@GetMapping("/top")
+	@Operation(summary = "인기 메뉴 상위 조회", description = "특정 날짜(기본 오늘) 기준 추천 수가 많은 메뉴를 상위 N개 조회합니다.")
 	public List<PopularMenuResponse> getTopMenus(
 			@RequestParam(required = false, defaultValue = "5") Integer limit,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
@@ -96,6 +102,7 @@ public class MenuLikeController {
 	}
 
 	@GetMapping("/status")
+	@Operation(summary = "좋아요 여부/총합 조회", description = "사용자가 특정 메뉴들을 좋아요 했는지와 메뉴별 총 좋아요 수를 반환합니다.")
 	public List<MenuLikeStatusResponse> getStatuses(
 			@RequestParam(required = false) Long userId,
 			@RequestParam(required = false) String userEmail,
@@ -126,6 +133,7 @@ public class MenuLikeController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
+	@Operation(summary = "좋아요 추가", description = "사용자가 메뉴를 좋아요하고 누적 카운트를 증가시킵니다.")
 	public MenuLike likeMenu(@Valid @RequestBody MenuLikeRequest request) {
 		User user = resolveUser(request);
 		Menu menu = fetchMenu(request.menuId());
@@ -153,6 +161,7 @@ public class MenuLikeController {
 
 	@DeleteMapping("/{userId}/{menuId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@Operation(summary = "좋아요 취소", description = "사용자가 메뉴에 남긴 좋아요를 삭제합니다.")
 	public void unlikeMenu(@PathVariable Long userId, @PathVariable Long menuId) {
 		MenuLikeId id = MenuLikeId.builder()
 				.userId(userId)

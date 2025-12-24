@@ -31,6 +31,8 @@ import com.example.itsme.repository.OrderRepository;
 import com.example.itsme.repository.StoreRepository;
 import com.example.itsme.repository.UserRepository;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -38,6 +40,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Orders", description = "Place, update, and cancel orders")
 public class OrderController {
 
 	private final OrderRepository orderRepository;
@@ -47,6 +50,7 @@ public class OrderController {
 	private final MenuRepository menuRepository;
 
 	@GetMapping
+	@Operation(summary = "주문 목록 조회", description = "사용자(필수)와 매장 ID(선택)로 주문 리스트를 조회합니다.")
 	public List<Order> getOrders(@RequestParam(required = false) Long userId,
 			@RequestParam(required = false) String userEmail,
 			@RequestParam(required = false) Long storeId) {
@@ -58,6 +62,7 @@ public class OrderController {
 	}
 
 	@GetMapping("/{id}")
+	@Operation(summary = "주문 단건 조회", description = "orderId로 주문 상세를 조회합니다.")
 	public Order getOrder(@PathVariable Long id) {
 		return fetchOrder(id);
 	}
@@ -65,6 +70,7 @@ public class OrderController {
 	@PostMapping
 	@Transactional
 	@ResponseStatus(HttpStatus.CREATED)
+	@Operation(summary = "주문 생성", description = "사용자/매장/아이템 정보를 받아 주문과 주문상품을 생성합니다.")
 	public Order createOrder(@Valid @RequestBody OrderRequest request) {
 		Order order = Order.builder()
 				.user(resolveUser(request.userId(), request.userEmail()))
@@ -78,6 +84,7 @@ public class OrderController {
 	}
 
 	@PutMapping("/{id}/status")
+	@Operation(summary = "주문 상태 변경", description = "orderId의 주문 상태를 업데이트합니다.")
 	public Order updateStatus(@PathVariable Long id, @Valid @RequestBody OrderStatusUpdateRequest request) {
 		Order order = fetchOrder(id);
 		order.setStatus(request.status());
@@ -86,6 +93,7 @@ public class OrderController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@Operation(summary = "주문 삭제", description = "orderId로 주문을 삭제합니다.")
 	public void deleteOrder(@PathVariable Long id) {
 		Order order = fetchOrder(id);
 		orderRepository.delete(order);

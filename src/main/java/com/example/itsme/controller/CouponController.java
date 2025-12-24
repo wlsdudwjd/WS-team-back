@@ -19,6 +19,8 @@ import com.example.itsme.dto.CouponRequest;
 import com.example.itsme.exception.ResourceNotFoundException;
 import com.example.itsme.repository.CouponRepository;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -26,22 +28,26 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/coupons")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Coupons", description = "Create and manage coupons")
 public class CouponController {
 
 	private final CouponRepository couponRepository;
 
 	@GetMapping
+	@Operation(summary = "쿠폰 목록 조회", description = "발급 가능한 모든 쿠폰을 조회합니다.")
 	public List<Coupon> getCoupons() {
 		return couponRepository.findAll();
 	}
 
 	@GetMapping("/{id}")
+	@Operation(summary = "쿠폰 단건 조회", description = "couponId로 쿠폰 상세를 조회합니다.")
 	public Coupon getCoupon(@PathVariable Long id) {
 		return fetchCoupon(id);
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
+	@Operation(summary = "쿠폰 생성", description = "할인 유형/값/유효기간을 포함한 쿠폰을 생성합니다.")
 	public Coupon createCoupon(@Valid @RequestBody CouponRequest request) {
 		Coupon coupon = Coupon.builder()
 				.name(request.name())
@@ -54,6 +60,7 @@ public class CouponController {
 	}
 
 	@PutMapping("/{id}")
+	@Operation(summary = "쿠폰 수정", description = "couponId로 쿠폰 정보를 수정합니다.")
 	public Coupon updateCoupon(@PathVariable Long id, @Valid @RequestBody CouponRequest request) {
 		Coupon coupon = fetchCoupon(id);
 		coupon.setName(request.name());
@@ -66,6 +73,7 @@ public class CouponController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@Operation(summary = "쿠폰 삭제", description = "couponId로 쿠폰을 삭제합니다.")
 	public void deleteCoupon(@PathVariable Long id) {
 		Coupon coupon = fetchCoupon(id);
 		couponRepository.delete(coupon);

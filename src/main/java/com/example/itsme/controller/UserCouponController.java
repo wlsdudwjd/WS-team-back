@@ -24,6 +24,8 @@ import com.example.itsme.repository.CouponRepository;
 import com.example.itsme.repository.UserCouponRepository;
 import com.example.itsme.repository.UserRepository;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -31,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/user-coupons")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "User Coupons", description = "Assign, list, and revoke user coupons")
 public class UserCouponController {
 
 	private final UserCouponRepository userCouponRepository;
@@ -38,6 +41,7 @@ public class UserCouponController {
 	private final CouponRepository couponRepository;
 
 	@GetMapping
+	@Operation(summary = "사용자 쿠폰 목록 조회", description = "사용자 ID/이메일로 보유 쿠폰 목록을 조회합니다.")
 	public List<UserCoupon> getUserCoupons(@RequestParam(required = false) Long userId,
 			@RequestParam(required = false) String userEmail) {
 		User user = resolveUser(userId, userEmail);
@@ -45,12 +49,14 @@ public class UserCouponController {
 	}
 
 	@GetMapping("/{id}")
+	@Operation(summary = "사용자 쿠폰 단건 조회", description = "userCouponId로 사용자 쿠폰을 조회합니다.")
 	public UserCoupon getUserCoupon(@PathVariable Long id) {
 		return fetchUserCoupon(id);
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
+	@Operation(summary = "쿠폰 지급", description = "사용자에게 쿠폰을 발급합니다.")
 	public UserCoupon grantCoupon(@Valid @RequestBody UserCouponRequest request) {
 		UserCoupon userCoupon = UserCoupon.builder()
 				.user(resolveUser(request.userId(), request.userEmail()))
@@ -61,6 +67,7 @@ public class UserCouponController {
 	}
 
 	@PutMapping("/{id}")
+	@Operation(summary = "사용자 쿠폰 수정", description = "userCouponId로 쿠폰/사용자/유효 여부를 수정합니다.")
 	public UserCoupon updateUserCoupon(@PathVariable Long id, @Valid @RequestBody UserCouponRequest request) {
 		UserCoupon userCoupon = fetchUserCoupon(id);
 		userCoupon.setUser(resolveUser(request.userId(), request.userEmail()));
@@ -71,6 +78,7 @@ public class UserCouponController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@Operation(summary = "사용자 쿠폰 삭제", description = "userCouponId로 사용자 쿠폰을 삭제합니다.")
 	public void deleteUserCoupon(@PathVariable Long id) {
 		UserCoupon userCoupon = fetchUserCoupon(id);
 		userCouponRepository.delete(userCoupon);

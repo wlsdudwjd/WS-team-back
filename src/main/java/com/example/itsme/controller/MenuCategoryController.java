@@ -22,6 +22,8 @@ import com.example.itsme.exception.ResourceNotFoundException;
 import com.example.itsme.repository.MenuCategoryRepository;
 import com.example.itsme.repository.ServiceTypeRepository;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -29,12 +31,14 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/menu-categories")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Menu Categories", description = "Manage categories for each service type")
 public class MenuCategoryController {
 
 	private final MenuCategoryRepository menuCategoryRepository;
 	private final ServiceTypeRepository serviceTypeRepository;
 
 	@GetMapping
+	@Operation(summary = "카테고리 목록 조회", description = "서비스 타입별 또는 전체 메뉴 카테고리를 조회합니다.")
 	public List<MenuCategory> getCategories(@RequestParam(required = false) Long serviceTypeId) {
 		if (serviceTypeId == null) {
 			return menuCategoryRepository.findAll();
@@ -43,12 +47,14 @@ public class MenuCategoryController {
 	}
 
 	@GetMapping("/{id}")
+	@Operation(summary = "카테고리 단건 조회", description = "menuCategoryId로 카테고리 상세를 조회합니다.")
 	public MenuCategory getCategory(@PathVariable Long id) {
 		return fetchCategory(id);
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
+	@Operation(summary = "카테고리 생성", description = "서비스 타입에 속한 새 카테고리를 등록합니다.")
 	public MenuCategory createCategory(@Valid @RequestBody MenuCategoryRequest request) {
 		ServiceType serviceType = fetchServiceType(request.serviceTypeId());
 		MenuCategory category = MenuCategory.builder()
@@ -59,6 +65,7 @@ public class MenuCategoryController {
 	}
 
 	@PutMapping("/{id}")
+	@Operation(summary = "카테고리 수정", description = "카테고리 이름과 서비스 타입을 변경합니다.")
 	public MenuCategory updateCategory(@PathVariable Long id, @Valid @RequestBody MenuCategoryRequest request) {
 		MenuCategory category = fetchCategory(id);
 		ServiceType serviceType = fetchServiceType(request.serviceTypeId());
@@ -69,6 +76,7 @@ public class MenuCategoryController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@Operation(summary = "카테고리 삭제", description = "menuCategoryId로 카테고리를 삭제합니다.")
 	public void deleteCategory(@PathVariable Long id) {
 		MenuCategory category = fetchCategory(id);
 		menuCategoryRepository.delete(category);

@@ -26,6 +26,8 @@ import com.example.itsme.repository.MenuRepository;
 import com.example.itsme.repository.UserRepository;
 import com.example.itsme.domain.User;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -33,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/cart-items")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Cart Items", description = "Manage items inside a cart")
 public class CartItemController {
 
 	private final CartItemRepository cartItemRepository;
@@ -41,18 +44,21 @@ public class CartItemController {
 	private final UserRepository userRepository;
 
 	@GetMapping("/cart/{cartId}")
+	@Operation(summary = "장바구니별 아이템 조회", description = "cartId로 장바구니 안의 모든 상품을 조회합니다.")
 	public List<CartItem> getItemsByCart(@PathVariable Long cartId) {
 		fetchCart(cartId);
 		return cartItemRepository.findByCartCartId(cartId);
 	}
 
 	@GetMapping("/{id}")
+	@Operation(summary = "장바구니 아이템 조회", description = "cartItemId로 단일 아이템을 조회합니다.")
 	public CartItem getCartItem(@PathVariable Long id) {
 		return fetchCartItem(id);
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
+	@Operation(summary = "아이템 추가/수량 증가", description = "장바구니에 메뉴를 추가하거나 이미 있으면 수량을 증가시킵니다.")
 	public CartItem createOrIncrement(@Valid @RequestBody CartItemRequest request) {
 		Cart cart = fetchCart(request.cartId());
 		if (request.userId() != null || (request.userEmail() != null && !request.userEmail().isBlank())) {
@@ -78,6 +84,7 @@ public class CartItemController {
 	}
 
 	@PutMapping("/{id}")
+	@Operation(summary = "아이템 수량 수정", description = "cartItemId로 장바구니 아이템의 수량을 변경합니다.")
 	public CartItem updateQuantity(@PathVariable Long id,
 			@Valid @RequestBody CartItemQuantityRequest request) {
 		CartItem item = fetchCartItem(id);
@@ -87,6 +94,7 @@ public class CartItemController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@Operation(summary = "아이템 삭제", description = "cartItemId로 장바구니 아이템을 삭제합니다.")
 	public void deleteCartItem(@PathVariable Long id) {
 		CartItem item = fetchCartItem(id);
 		cartItemRepository.delete(item);

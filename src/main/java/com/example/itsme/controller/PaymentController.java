@@ -24,6 +24,8 @@ import com.example.itsme.repository.OrderRepository;
 import com.example.itsme.repository.PaymentRepository;
 import com.example.itsme.repository.UserRepository;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -31,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Payments", description = "Payments for orders and users")
 public class PaymentController {
 
 	private final PaymentRepository paymentRepository;
@@ -38,6 +41,7 @@ public class PaymentController {
 	private final OrderRepository orderRepository;
 
 	@GetMapping
+	@Operation(summary = "결제 목록 조회", description = "사용자나 주문 기준으로 결제 내역을 조회합니다.")
 	public List<Payment> getPayments(@RequestParam(required = false) Long userId,
 			@RequestParam(required = false) Long orderId) {
 		if (userId != null) {
@@ -50,12 +54,14 @@ public class PaymentController {
 	}
 
 	@GetMapping("/{id}")
+	@Operation(summary = "결제 단건 조회", description = "paymentId로 결제 상세를 조회합니다.")
 	public Payment getPayment(@PathVariable Long id) {
 		return fetchPayment(id);
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
+	@Operation(summary = "결제 생성", description = "사용자/주문/결제수단/금액을 받아 결제 정보를 생성합니다.")
 	public Payment createPayment(@Valid @RequestBody PaymentRequest request) {
 		Payment payment = Payment.builder()
 				.user(fetchUser(request.userId()))
@@ -67,6 +73,7 @@ public class PaymentController {
 	}
 
 	@PutMapping("/{id}")
+	@Operation(summary = "결제 수정", description = "paymentId의 결제 정보를 수정합니다.")
 	public Payment updatePayment(@PathVariable Long id, @Valid @RequestBody PaymentRequest request) {
 		Payment payment = fetchPayment(id);
 		payment.setUser(fetchUser(request.userId()));
@@ -78,6 +85,7 @@ public class PaymentController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@Operation(summary = "결제 삭제", description = "paymentId로 결제를 삭제합니다.")
 	public void deletePayment(@PathVariable Long id) {
 		Payment payment = fetchPayment(id);
 		paymentRepository.delete(payment);

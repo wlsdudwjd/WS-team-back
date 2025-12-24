@@ -21,6 +21,8 @@ import com.example.itsme.exception.ResourceNotFoundException;
 import com.example.itsme.repository.CartRepository;
 import com.example.itsme.repository.UserRepository;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -28,12 +30,14 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/carts")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Carts", description = "Manage shopping carts per user")
 public class CartController {
 
 	private final CartRepository cartRepository;
 	private final UserRepository userRepository;
 
 	@GetMapping
+	@Operation(summary = "장바구니 목록 조회", description = "사용자 ID/이메일로 해당 사용자의 장바구니 목록을 조회합니다.")
 	public List<Cart> getCarts(@RequestParam(required = false) Long userId,
 			@RequestParam(required = false) String userEmail) {
 		User user = resolveUser(userId, userEmail);
@@ -41,12 +45,14 @@ public class CartController {
 	}
 
 	@GetMapping("/{id}")
+	@Operation(summary = "장바구니 단건 조회", description = "cartId로 장바구니를 조회합니다.")
 	public Cart getCart(@PathVariable Long id) {
 		return fetchCart(id);
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
+	@Operation(summary = "장바구니 생성", description = "사용자에게 빈 장바구니를 생성합니다.")
 	public Cart createCart(@Valid @RequestBody CartRequest request) {
 		User user = resolveUser(request.userId(), request.userEmail());
 		Cart cart = Cart.builder()
@@ -57,6 +63,7 @@ public class CartController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@Operation(summary = "장바구니 삭제", description = "cartId로 장바구니를 삭제합니다.")
 	public void deleteCart(@PathVariable Long id) {
 		Cart cart = fetchCart(id);
 		cartRepository.delete(cart);

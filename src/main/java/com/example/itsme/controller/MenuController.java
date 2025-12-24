@@ -24,6 +24,8 @@ import com.example.itsme.repository.MenuCategoryRepository;
 import com.example.itsme.repository.MenuRepository;
 import com.example.itsme.repository.StoreRepository;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -31,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/menus")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Menus", description = "Create/read/update/delete menus")
 public class MenuController {
 
 	private final MenuRepository menuRepository;
@@ -38,6 +41,7 @@ public class MenuController {
 	private final MenuCategoryRepository menuCategoryRepository;
 
 	@GetMapping
+	@Operation(summary = "메뉴 목록 조회", description = "매장/카테고리/서비스타입 조건으로 메뉴 리스트를 반환합니다.")
 	public List<Menu> getMenus(@RequestParam(required = false) Long storeId,
 			@RequestParam(required = false) Long categoryId,
 			@RequestParam(required = false) Long serviceTypeId) {
@@ -61,12 +65,14 @@ public class MenuController {
 	}
 
 	@GetMapping("/{id}")
+	@Operation(summary = "메뉴 단건 조회", description = "menuId로 메뉴 상세 정보를 조회합니다.")
 	public Menu getMenu(@PathVariable Long id) {
 		return fetchMenu(id);
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
+	@Operation(summary = "메뉴 생성", description = "매장/카테고리에 속한 새 메뉴를 등록합니다.")
 	public Menu createMenu(@Valid @RequestBody MenuRequest request) {
 		Menu menu = Menu.builder()
 				.name(request.name())
@@ -80,6 +86,7 @@ public class MenuController {
 
 	@PostMapping("/ensure")
 	@ResponseStatus(HttpStatus.CREATED)
+	@Operation(summary = "메뉴 존재 보장", description = "동일 매장/이름 메뉴가 없으면 생성하고, 있으면 기존 메뉴를 반환합니다.")
 	public Menu ensureMenu(@Valid @RequestBody MenuRequest request) {
 		var existing = menuRepository.findByStoreStoreIdAndName(request.storeId(), request.name());
 		if (existing.isPresent()) {
@@ -89,6 +96,7 @@ public class MenuController {
 	}
 
 	@PutMapping("/{id}")
+	@Operation(summary = "메뉴 수정", description = "메뉴명, 가격, 설명, 매장, 카테고리를 변경합니다.")
 	public Menu updateMenu(@PathVariable Long id, @Valid @RequestBody MenuRequest request) {
 		Menu menu = fetchMenu(id);
 		menu.setName(request.name());
@@ -101,6 +109,7 @@ public class MenuController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@Operation(summary = "메뉴 삭제", description = "menuId로 메뉴를 삭제합니다.")
 	public void deleteMenu(@PathVariable Long id) {
 		Menu menu = fetchMenu(id);
 		menuRepository.delete(menu);

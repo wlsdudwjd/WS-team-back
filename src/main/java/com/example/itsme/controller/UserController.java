@@ -36,19 +36,19 @@ public class UserController {
 	private final UserRepository userRepository;
 
 	@GetMapping
-	@Operation(summary = "List users")
+	@Operation(summary = "사용자 목록 조회", description = "전체 사용자 리스트를 반환합니다.")
 	public List<User> getUsers() {
 		return userRepository.findAll();
 	}
 
 	@GetMapping("/{id}")
-	@Operation(summary = "Get user by id")
+	@Operation(summary = "사용자 단건 조회", description = "userId로 사용자 정보를 조회합니다.")
 	public User getUser(@PathVariable Long id) {
 		return fetchUser(id);
 	}
 
 	@GetMapping(params = "email")
-	@Operation(summary = "Get user by email", description = "Lookup user by email. Useful for showing profile info after login.")
+	@Operation(summary = "이메일로 사용자 조회", description = "이메일로 로그인 후 프로필을 조회할 때 사용합니다.")
 	public UserProfileResponse getUserByEmail(@RequestParam String email) {
 		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found for email: " + email));
@@ -57,7 +57,7 @@ public class UserController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	@Operation(summary = "Create user (signup)", description = "Registers a new user. Email must be unique and is used for login.")
+	@Operation(summary = "사용자 생성(회원가입)", description = "이메일을 고유 로그인 ID로 사용하여 사용자를 등록합니다.")
 	public User createUser(@Valid @RequestBody UserRequest request) {
 		User user = User.builder()
 				.username(request.username())
@@ -70,7 +70,7 @@ public class UserController {
 	}
 
 	@PutMapping("/{id}")
-	@Operation(summary = "Update user")
+	@Operation(summary = "사용자 수정", description = "userId로 사용자 프로필을 수정합니다.")
 	public User updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest request) {
 		User user = fetchUser(id);
 		user.setUsername(request.username());
@@ -83,7 +83,7 @@ public class UserController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	@Operation(summary = "Delete user")
+	@Operation(summary = "사용자 삭제", description = "userId로 사용자를 삭제합니다.")
 	public void deleteUser(@PathVariable Long id) {
 		User user = fetchUser(id);
 		userRepository.delete(user);

@@ -22,6 +22,8 @@ import com.example.itsme.exception.ResourceNotFoundException;
 import com.example.itsme.repository.ServiceTypeRepository;
 import com.example.itsme.repository.StoreRepository;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -29,12 +31,14 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/stores")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Stores", description = "Stores (cafes/cafeterias) per service type")
 public class StoreController {
 
 	private final StoreRepository storeRepository;
 	private final ServiceTypeRepository serviceTypeRepository;
 
 	@GetMapping
+	@Operation(summary = "매장 목록 조회", description = "서비스 타입별 또는 전체 매장을 조회합니다.")
 	public List<Store> getStores(@RequestParam(required = false) Long serviceTypeId) {
 		if (serviceTypeId == null) {
 			return storeRepository.findAll();
@@ -43,12 +47,14 @@ public class StoreController {
 	}
 
 	@GetMapping("/{id}")
+	@Operation(summary = "매장 단건 조회", description = "storeId로 매장을 조회합니다.")
 	public Store getStore(@PathVariable Long id) {
 		return fetchStore(id);
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
+	@Operation(summary = "매장 생성", description = "서비스 타입에 속한 매장을 등록합니다.")
 	public Store createStore(@Valid @RequestBody StoreRequest request) {
 		ServiceType serviceType = fetchServiceType(request.serviceTypeId());
 		Store store = Store.builder()
@@ -59,6 +65,7 @@ public class StoreController {
 	}
 
 	@PutMapping("/{id}")
+	@Operation(summary = "매장 수정", description = "storeId로 매장 이름/서비스 타입을 수정합니다.")
 	public Store updateStore(@PathVariable Long id, @Valid @RequestBody StoreRequest request) {
 		Store store = fetchStore(id);
 		ServiceType serviceType = fetchServiceType(request.serviceTypeId());
@@ -69,6 +76,7 @@ public class StoreController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@Operation(summary = "매장 삭제", description = "storeId로 매장을 삭제합니다.")
 	public void deleteStore(@PathVariable Long id) {
 		Store store = fetchStore(id);
 		storeRepository.delete(store);

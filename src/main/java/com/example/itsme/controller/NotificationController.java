@@ -21,6 +21,7 @@ import com.example.itsme.exception.ResourceNotFoundException;
 import com.example.itsme.repository.NotificationRepository;
 import com.example.itsme.repository.UserRepository;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Notifications", description = "Send and retrieve user notifications")
 public class NotificationController {
 
 	private final NotificationRepository notificationRepository;
