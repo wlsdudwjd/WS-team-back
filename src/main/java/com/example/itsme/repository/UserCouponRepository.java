@@ -8,4 +8,6 @@ import com.example.itsme.domain.UserCoupon;
 
 public interface UserCouponRepository extends JpaRepository<UserCoupon, Long> {
 	List<UserCoupon> findByUserUserId(Long userId);
+
+	List<UserCoupon> findByUserEmail(String email);
 }

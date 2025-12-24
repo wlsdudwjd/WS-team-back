@@ -34,11 +34,10 @@ public class NotificationController {
 	private final UserRepository userRepository;
 
 	@GetMapping
-	public List<Notification> getNotifications(@RequestParam(required = false) Long userId) {
-		if (userId == null) {
-			return notificationRepository.findAll();
-		}
-		return notificationRepository.findByUserUserId(userId);
+	public List<Notification> getNotifications(@RequestParam(required = false) Long userId,
+			@RequestParam(required = false) String userEmail) {
+		User user = resolveUser(userId, userEmail);
+		return notificationRepository.findByUserUserId(user.getUserId());
 	}
 
 	@GetMapping("/{id}")
@@ -49,7 +48,7 @@ public class NotificationController {
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public Notification createNotification(@Valid @RequestBody NotificationRequest request) {
-		User user = fetchUser(request.userId());
+		User user = resolveUser(request.userId(), request.userEmail());
 		Notification notification = Notification.builder()
 				.user(user)
 				.title(request.title())
@@ -70,8 +69,15 @@ public class NotificationController {
 				.orElseThrow(() -> new ResourceNotFoundException("Notification not found: " + id));
 	}
 
-	private User fetchUser(Long id) {
-		return userRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+	private User resolveUser(Long userId, String userEmail) {
+		if (userId != null) {
+			return userRepository.findById(userId)
+					.orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+		}
+		if (userEmail != null && !userEmail.isBlank()) {
+			return userRepository.findByEmail(userEmail)
+					.orElseThrow(() -> new ResourceNotFoundException("User not found: " + userEmail));
+		}
+		throw new ResourceNotFoundException("User identifier required");
 	}
 }

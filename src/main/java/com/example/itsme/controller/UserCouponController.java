@@ -38,11 +38,10 @@ public class UserCouponController {
 	private final CouponRepository couponRepository;
 
 	@GetMapping
-	public List<UserCoupon> getUserCoupons(@RequestParam(required = false) Long userId) {
-		if (userId == null) {
-			return userCouponRepository.findAll();
-		}
-		return userCouponRepository.findByUserUserId(userId);
+	public List<UserCoupon> getUserCoupons(@RequestParam(required = false) Long userId,
+			@RequestParam(required = false) String userEmail) {
+		User user = resolveUser(userId, userEmail);
+		return userCouponRepository.findByUserUserId(user.getUserId());
 	}
 
 	@GetMapping("/{id}")
@@ -54,7 +53,7 @@ public class UserCouponController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public UserCoupon grantCoupon(@Valid @RequestBody UserCouponRequest request) {
 		UserCoupon userCoupon = UserCoupon.builder()
-				.user(fetchUser(request.userId()))
+				.user(resolveUser(request.userId(), request.userEmail()))
 				.coupon(fetchCoupon(request.couponId()))
 				.isValid(request.isValid())
 				.build();
@@ -64,7 +63,7 @@ public class UserCouponController {
 	@PutMapping("/{id}")
 	public UserCoupon updateUserCoupon(@PathVariable Long id, @Valid @RequestBody UserCouponRequest request) {
 		UserCoupon userCoupon = fetchUserCoupon(id);
-		userCoupon.setUser(fetchUser(request.userId()));
+		userCoupon.setUser(resolveUser(request.userId(), request.userEmail()));
 		userCoupon.setCoupon(fetchCoupon(request.couponId()));
 		userCoupon.setIsValid(request.isValid());
 		return userCouponRepository.save(userCoupon);
@@ -82,9 +81,16 @@ public class UserCouponController {
 				.orElseThrow(() -> new ResourceNotFoundException("User coupon not found: " + id));
 	}
 
-	private User fetchUser(Long id) {
-		return userRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+	private User resolveUser(Long id, String email) {
+		if (id != null) {
+			return userRepository.findById(id)
+					.orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+		}
+		if (email != null && !email.isBlank()) {
+			return userRepository.findByEmail(email)
+					.orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
+		}
+		throw new ResourceNotFoundException("User identifier required");
 	}
 
 	private Coupon fetchCoupon(Long id) {

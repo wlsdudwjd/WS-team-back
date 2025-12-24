@@ -48,8 +48,9 @@ public class OrderController {
 
 	@GetMapping
 	public List<Order> getOrders(@RequestParam(required = false) Long userId,
+			@RequestParam(required = false) String userEmail,
 			@RequestParam(required = false) Long storeId) {
-		User user = resolveUser(userId, null);
+		User user = resolveUser(userId, userEmail);
 		if (storeId != null) {
 			return orderRepository.findByUserUserIdAndStoreStoreId(user.getUserId(), storeId);
 		}
