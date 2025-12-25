@@ -2,6 +2,9 @@ package com.example.itsme.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -41,27 +44,34 @@ public class MenuController {
 	private final MenuCategoryRepository menuCategoryRepository;
 
 	@GetMapping
-	@Operation(summary = "메뉴 목록 조회", description = "매장/카테고리/서비스타입 조건으로 메뉴 리스트를 반환합니다.")
-	public List<Menu> getMenus(@RequestParam(required = false) Long storeId,
+	@Operation(summary = "메뉴 목록 조회", description = "매장/카테고리/서비스타입/이름 검색 + 페이지네이션/정렬을 지원합니다.")
+	public Page<Menu> getMenus(@RequestParam(required = false) Long storeId,
 			@RequestParam(required = false) Long categoryId,
-			@RequestParam(required = false) Long serviceTypeId) {
-		// 우선순위: 매장+카테고리 > 매장 > 카테고리+서비스타입 > 서비스타입 > 카테고리 > 전체
-		if (storeId != null && categoryId != null) {
-			return menuRepository.findByStoreStoreIdAndCategoryMenuCategoryId(storeId, categoryId);
-		}
+			@RequestParam(required = false) Long serviceTypeId,
+			@RequestParam(required = false) String q,
+			Pageable pageable) {
+
+		Specification<Menu> spec = Specification.where(null);
+
 		if (storeId != null) {
-			return menuRepository.findByStoreStoreId(storeId);
-		}
-		if (categoryId != null && serviceTypeId != null) {
-			return menuRepository.findByCategoryMenuCategoryIdAndStoreServiceTypeServiceTypeId(categoryId, serviceTypeId);
-		}
-		if (serviceTypeId != null) {
-			return menuRepository.findByStoreServiceTypeServiceTypeId(serviceTypeId);
+			spec = spec.and((root, query, cb) -> cb.equal(root.get("store").get("storeId"), storeId));
 		}
 		if (categoryId != null) {
-			return menuRepository.findByCategoryMenuCategoryId(categoryId);
+			spec = spec.and((root, query, cb) -> cb.equal(root.get("category").get("menuCategoryId"), categoryId));
 		}
-		return menuRepository.findAll();
+		if (serviceTypeId != null) {
+			spec = spec.and((root, query, cb) -> cb.equal(root.get("store").get("serviceType").get("serviceTypeId"),
+					serviceTypeId));
+		}
+		if (q != null && !q.isBlank()) {
+			String like = "%" + q.trim().toLowerCase() + "%";
+			spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), like));
+		}
+
+		if (spec == null) {
+			return menuRepository.findAll(pageable);
+		}
+		return menuRepository.findAll(spec, pageable);
 	}
 
 	@GetMapping("/{id}")

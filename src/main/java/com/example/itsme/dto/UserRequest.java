@@ -3,6 +3,7 @@ package com.example.itsme.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import com.example.itsme.domain.Role;
 
 public record UserRequest(
 		@Schema(example = "plain-text-password")
@@ -14,6 +15,8 @@ public record UserRequest(
 		@Schema(example = "홍길동")
 		@NotBlank String name,
 		@Schema(example = "01012345678")
-		@NotBlank String phone
+		@NotBlank String phone,
+		@Schema(example = "USER", description = "Role for the user (USER or ADMIN)")
+		Role role
 ) {
 }

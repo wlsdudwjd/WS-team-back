@@ -9,6 +9,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
@@ -56,6 +58,12 @@ public class User {
 
 	@Column
 	private String phone;
+
+	@jakarta.validation.constraints.NotNull
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	@Builder.Default
+	private Role role = Role.USER;
 
 	@CreationTimestamp
 	@Column(name = "created_at", nullable = false, updatable = false)

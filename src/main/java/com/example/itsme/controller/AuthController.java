@@ -10,14 +10,17 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.example.itsme.domain.User;
 import com.example.itsme.dto.AuthResponse;
+import com.example.itsme.dto.JwtAuthResponse;
 import com.example.itsme.dto.FirebaseLoginRequest;
 import com.example.itsme.dto.LoginRequest;
+import com.example.itsme.dto.RefreshTokenRequest;
 import com.example.itsme.dto.UserRequest;
 import com.example.itsme.exception.ResourceNotFoundException;
 import com.example.itsme.repository.UserRepository;
 import com.example.itsme.service.FirebaseAuthService;
 import com.example.itsme.service.FirebaseUser;
 import com.example.itsme.service.PasswordService;
+import com.example.itsme.security.JwtTokenProvider;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,11 +36,12 @@ public class AuthController {
 	private final UserRepository userRepository;
 	private final FirebaseAuthService firebaseAuthService;
 	private final PasswordService passwordService;
+	private final JwtTokenProvider jwtTokenProvider;
 
 	@PostMapping("/login")
 	@ResponseStatus(HttpStatus.OK)
 	@Operation(summary = "Login with email/password", description = "Matches email as the login identifier and compares plain-text password.")
-	public AuthResponse login(@Valid @RequestBody LoginRequest request) {
+	public JwtAuthResponse login(@Valid @RequestBody LoginRequest request) {
 		User user = userRepository.findByEmail(request.email())
 				.orElseThrow(() -> new ResourceNotFoundException("User not found for email: " + request.email()));
 		if (passwordService.isHashed(user.getPassword())) {
@@ -55,16 +59,21 @@ public class AuthController {
 		if (user.getPassword() == null || user.getPassword().isBlank()) {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
 		}
-		return new AuthResponse(user.getUserId(), user.getUsername(), user.getEmail(), user.getName());
+		String accessToken = jwtTokenProvider.generateAccessToken(user);
+		String refreshToken = jwtTokenProvider.generateRefreshToken(user);
+		return JwtAuthResponse.of(user.getUserId(), user.getUsername(), user.getEmail(), user.getName(),
+				user.getRole(), accessToken, refreshToken);
 	}
 
 	@PostMapping("/signup")
 	@ResponseStatus(HttpStatus.CREATED)
 	@Operation(summary = "Signup with email/password", description = "Creates a user with the provided email, password, name, phone. Email must be unique.")
-	public AuthResponse signup(@Valid @RequestBody UserRequest request) {
+	public JwtAuthResponse signup(@Valid @RequestBody UserRequest request) {
 		if (userRepository.existsByEmail(request.email())) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists: " + request.email());
 		}
+
+		var role = request.role() != null ? request.role() : com.example.itsme.domain.Role.USER;
 
 		User user = User.builder()
 				.email(request.email())
@@ -72,16 +81,20 @@ public class AuthController {
 				.password(passwordService.hash(request.password()))
 				.name(request.name())
 				.phone(request.phone())
+				.role(role)
 				.build();
 
 		User saved = userRepository.save(user);
-		return new AuthResponse(saved.getUserId(), saved.getUsername(), saved.getEmail(), saved.getName());
+		String accessToken = jwtTokenProvider.generateAccessToken(saved);
+		String refreshToken = jwtTokenProvider.generateRefreshToken(saved);
+		return JwtAuthResponse.of(saved.getUserId(), saved.getUsername(), saved.getEmail(), saved.getName(),
+				saved.getRole(), accessToken, refreshToken);
 	}
 
 	@PostMapping("/firebase-login")
 	@ResponseStatus(HttpStatus.OK)
 	@Operation(summary = "Login with Firebase ID token", description = "Verifies Firebase ID token, syncs user in DB, and returns profile.")
-	public AuthResponse firebaseLogin(@Valid @RequestBody FirebaseLoginRequest request) {
+	public JwtAuthResponse firebaseLogin(@Valid @RequestBody FirebaseLoginRequest request) {
 		FirebaseUser firebaseUser = firebaseAuthService.verify(request.idToken());
 		if (firebaseUser.email() == null || firebaseUser.email().isBlank()) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Firebase token missing email");
@@ -106,7 +119,27 @@ public class AuthController {
 			userRepository.save(user);
 		}
 
-		return new AuthResponse(user.getUserId(), user.getUsername(), user.getEmail(), user.getName());
+		String accessToken = jwtTokenProvider.generateAccessToken(user);
+		String refreshToken = jwtTokenProvider.generateRefreshToken(user);
+		return JwtAuthResponse.of(user.getUserId(), user.getUsername(), user.getEmail(), user.getName(), user.getRole(),
+				accessToken, refreshToken);
+	}
+
+	@PostMapping("/refresh")
+	@ResponseStatus(HttpStatus.OK)
+	@Operation(summary = "Refresh access token", description = "Issues a new access token using a valid refresh token.")
+	public JwtAuthResponse refresh(@Valid @RequestBody RefreshTokenRequest request) {
+		String refreshToken = request.refreshToken();
+		if (!jwtTokenProvider.validateToken(refreshToken)) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
+		}
+		Long userId = jwtTokenProvider.parseUserId(refreshToken);
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+		String newAccess = jwtTokenProvider.generateAccessToken(user);
+		String newRefresh = jwtTokenProvider.generateRefreshToken(user);
+		return JwtAuthResponse.of(user.getUserId(), user.getUsername(), user.getEmail(), user.getName(), user.getRole(),
+				newAccess, newRefresh);
 	}
 
 	private User createUserFromFirebase(FirebaseUser firebaseUser, FirebaseLoginRequest request) {
@@ -142,6 +175,7 @@ public class AuthController {
 				.password(passwordService.hash("firebase")) // Firebase manages credentials
 				.name(nameToUse)
 				.phone(phoneToUse)
+				.role(com.example.itsme.domain.Role.USER)
 				.build();
 		return userRepository.save(newUser);
 	}
