@@ -17,4 +17,3 @@ tmp
 .env
 .env.*
 firebase-adminsdk.json
-src/main/resources/static
