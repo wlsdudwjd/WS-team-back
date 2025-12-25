@@ -1,27 +1,24 @@
-# Itsme 백엔드
+# Itsme (학식 주문 웹사이트)
 
-Spring Boot 3.5 기반 API 서버 (MySQL, Redis, JWT + Firebase/Google 로그인).
-캠퍼스 주문(매장/메뉴/주문/결제/쿠폰/알림) 기능을 제공하며 JWT 기반 인증/인가와 Swagger 문서를 포함합니다.
+Spring Boot + Vue 기반 학식, 카페 주문 웹사이트입니다.
+학식, 카페 주문(매장/메뉴/주문/결제/쿠폰/알림) 기능을 제공하며 JWT 기반 인증/인가와 Swagger 문서를 포함합니다.
 
-## 빠른 실행
-### Docker (권장)
-```bash
-docker compose up -d --build
-```
-- 기본 포트: `8080` (`SERVER_PORT`로 변경 가능)
-- 헬스체크: `GET /health`
-- Swagger: `http://localhost:8080/swagger-ui/index.html` (배포 후 `http://<jcloud-ip>:<port>/swagger-ui/index.html`)
-- API Root: `/api` (예: `http://localhost:8080/api`)
+## 접속 주소
+### 서버
+- root 주소: http://113.198.66.68:10086/
+- Swagger 주소: http://113.198.66.68:10086/swagger-ui/index.html
+- 헬스 체크: http://113.198.66.68:10086/health
+
+### 로컬
+- root 주소: http://localhost:8080/
+- Swagger 주소: http://localhost:8080/swagger-ui/index.html
+- 헬스 체크: http://localhost:8080/health
 
 ### 로컬 실행
 ```bash
-./gradlew bootRun
-```
-MySQL/Redis가 먼저 떠 있어야 합니다(`docker compose up db redis` 권장).
-또는 빌드/실행:
-```bash
-./gradlew clean build
-java -jar build/libs/*SNAPSHOT.jar
+./gradlew bootJar -x test
+cp build/libs/*SNAPSHOT.jar ./app.jar
+docker compose up -d --build
 ```
 
 ## 환경변수 (.env.example 참고)
@@ -97,7 +94,7 @@ java -jar build/libs/*SNAPSHOT.jar
   ```
 
 ## 배포 (JCloud 수동 가이드)
-1) `/gradlew -x test build` 실행 후 `scp -i ~/term.pem -P 19086 build/libs/itsme-0.0.1-SNAPSHOT.jar ubuntu@113.198.66.68:~/deploy/itsme/app.jar` (term.pem은 경로에 맞춰 주셔야 합니다.)
+1) 로컬에서 `/gradlew -x test build` 실행 후 `scp -i ~/term.pem -P 19086 build/libs/itsme-0.0.1-SNAPSHOT.jar ubuntu@113.198.66.68:~/deploy/itsme/app.jar` (term.pem은 경로에 맞춰 주셔야 합니다.)
 2) 서버에 Docker 설치
 3) 서버 접속 후 `cd deploy/itsme` 이동
 4) `docker compose up -d --build` 실행
@@ -105,3 +102,44 @@ java -jar build/libs/*SNAPSHOT.jar
 ## 테스트
 - 실행: `./gradlew test` (H2 + Firebase 모킹, `test` 프로파일)
 - MockMvc 통합/RBAC/auth 포함 20+ 케이스
+
+## 사용설명서
+
+![img.png](screenshot/img.png)
+1. 회원가입 화면입니다. 이메일 혹은 구글 계정으로 회원을 만들어 로그인 할 수 있습니다.
+
+![img_1.png](screenshot/img_1.png)
+2. 홈 화면입니다.
+
+![img_2.png](screenshot/img_2.png)
+3. 매장 화면입니다. 원하는 매장을 선택 할 수 있습니다.
+
+![img_3.png](screenshot/img_3.png)
+4. 메뉴 화면입니다. 다양한 메뉴를 확인 하실 수 있습니다.
+
+![img_4.png](screenshot/img_4.png)
+5. ㅂ
+
+![img_5.png](screenshot/img_5.png)
+6. 장바구니 화면입니다. 화면 오른쪽 위 장바구니 모양을 통해 장바구니에 담긴 메뉴를 확인 할 수 있습니다.
+
+![img_6.png](screenshot/img_6.png)
+7. 주문 내역 화면입니다. 주문하신 메뉴를 확인하실 수 있습니다.
+
+![img_7.png](screenshot/img_7.png)
+8. 교환권 메뉴입니다. 사용하기 버튼을 통해 주문 내역에 있는 메뉴를 수령 하실 수 있습니다.
+
+![img_8.png](screenshot/img_8.png)
+9. 교환이 완료되면 수령완료가 됩니다.
+
+![img_9.png](screenshot/img_9.png)
+10. 알림 화면입니다. 화면 오른쪽 위 알림 버튼을 통해 다양한 알림을 확인 할 수 있습니다.
+
+![img_10.png](screenshot/img_10.png)
+11. 홈 화면에 있는 메뉴 추천 기능입니다. 메뉴 추천하기 버튼과 오늘의 인기 메뉴를 확인 할 수 있습니다.
+
+![img_11.png](screenshot/img_11.png)
+12. 메뉴 추천하기 화면입니다. 현재 판매중인 메뉴를 확인 할 수 있고, 검색을 통해 원하는 메뉴를 찾을 수 있습니다. 메뉴 오른쪽 엄지 버튼을 통해 추천을 할 수 있습니다.
+
+![img_12.png](screenshot/img_12.png)
+13. 더보기 화면입니다. 나의 계정 정보를 확인 할 수 있고, 프로필 관리와 로그아웃을 할 수 있습니다.
