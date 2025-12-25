@@ -3,6 +3,7 @@ package com.example.itsme.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,19 +37,22 @@ public class UserController {
 	private final UserRepository userRepository;
 
 	@GetMapping
-	@Operation(summary = "사용자 목록 조회", description = "전체 사용자 리스트를 반환합니다.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@Operation(summary = "사용자목록 조회", description = "전체 사용자 리스트를 반환합니다")
 	public List<User> getUsers() {
 		return userRepository.findAll();
 	}
 
 	@GetMapping("/{id}")
-	@Operation(summary = "사용자 단건 조회", description = "userId로 사용자 정보를 조회합니다.")
+	@PreAuthorize("hasAnyRole('ADMIN','USER')")
+	@Operation(summary = "사용자단건 조회", description = "userId로 사용자 상세 정보를 조회합니다")
 	public User getUser(@PathVariable Long id) {
 		return fetchUser(id);
 	}
 
 	@GetMapping(params = "email")
-	@Operation(summary = "이메일로 사용자 조회", description = "이메일로 로그인 후 프로필을 조회할 때 사용합니다.")
+	@PreAuthorize("hasAnyRole('ADMIN','USER')")
+	@Operation(summary = "이메일로 사용자조회", description = "이메일로 로그인 프로필을 조회합니다")
 	public UserProfileResponse getUserByEmail(@RequestParam String email) {
 		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found for email: " + email));
@@ -57,7 +61,8 @@ public class UserController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	@Operation(summary = "사용자 생성(회원가입)", description = "이메일을 고유 로그인 ID로 사용하여 사용자를 등록합니다.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@Operation(summary = "사용자생성(회원가입 아님)", description = "관리자용 사용자 등록 API")
 	public User createUser(@Valid @RequestBody UserRequest request) {
 		User user = User.builder()
 				.username(request.username())
@@ -70,7 +75,8 @@ public class UserController {
 	}
 
 	@PutMapping("/{id}")
-	@Operation(summary = "사용자 수정", description = "userId로 사용자 프로필을 수정합니다.")
+	@PreAuthorize("hasAnyRole('ADMIN','USER')")
+	@Operation(summary = "사용자수정", description = "userId로 사용자를 수정합니다")
 	public User updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest request) {
 		User user = fetchUser(id);
 		user.setUsername(request.username());
@@ -83,7 +89,8 @@ public class UserController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	@Operation(summary = "사용자 삭제", description = "userId로 사용자를 삭제합니다.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@Operation(summary = "사용자삭제", description = "userId로 사용자를 삭제합니다")
 	public void deleteUser(@PathVariable Long id) {
 		User user = fetchUser(id);
 		userRepository.delete(user);

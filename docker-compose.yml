@@ -1,5 +1,28 @@
 version: "3.9"
 services:
+  app:
+    build: .
+    image: itsme-backend:latest
+    container_name: itsme-app
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:mysql://db:3306/itsme?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-itsme}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-itsmepass}
+      SERVER_PORT: ${SERVER_PORT:-8080}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost:8080/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
   db:
     image: mysql:8.0
     container_name: itsme-mysql
@@ -15,5 +38,16 @@ services:
       - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: itsme-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
 volumes:
   db_data:
+  redis_data:

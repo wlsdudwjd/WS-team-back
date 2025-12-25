@@ -1,11 +1,10 @@
 package com.example.itsme.controller;
 
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -68,21 +67,19 @@ public class MenuController {
 			spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), like));
 		}
 
-		if (spec == null) {
-			return menuRepository.findAll(pageable);
-		}
 		return menuRepository.findAll(spec, pageable);
 	}
 
 	@GetMapping("/{id}")
-	@Operation(summary = "메뉴 단건 조회", description = "menuId로 메뉴 상세 정보를 조회합니다.")
+	@Operation(summary = "메뉴 단건 조회", description = "menuId로 메뉴 상세를 조회합니다")
 	public Menu getMenu(@PathVariable Long id) {
 		return fetchMenu(id);
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	@Operation(summary = "메뉴 생성", description = "매장/카테고리에 속한 새 메뉴를 등록합니다.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@Operation(summary = "메뉴 생성", description = "매장/카테고리와 연결된 새 메뉴를 등록합니다")
 	public Menu createMenu(@Valid @RequestBody MenuRequest request) {
 		Menu menu = Menu.builder()
 				.name(request.name())
@@ -96,7 +93,8 @@ public class MenuController {
 
 	@PostMapping("/ensure")
 	@ResponseStatus(HttpStatus.CREATED)
-	@Operation(summary = "메뉴 존재 보장", description = "동일 매장/이름 메뉴가 없으면 생성하고, 있으면 기존 메뉴를 반환합니다.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@Operation(summary = "메뉴 존재 보장", description = "단일 매장/이름 메뉴가 없으면 생성, 있으면 기존 메뉴를 반환합니다")
 	public Menu ensureMenu(@Valid @RequestBody MenuRequest request) {
 		var existing = menuRepository.findByStoreStoreIdAndName(request.storeId(), request.name());
 		if (existing.isPresent()) {
@@ -106,7 +104,8 @@ public class MenuController {
 	}
 
 	@PutMapping("/{id}")
-	@Operation(summary = "메뉴 수정", description = "메뉴명, 가격, 설명, 매장, 카테고리를 변경합니다.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@Operation(summary = "메뉴 수정", description = "메뉴명/가격/설명/매장/카테고리를 변경합니다.")
 	public Menu updateMenu(@PathVariable Long id, @Valid @RequestBody MenuRequest request) {
 		Menu menu = fetchMenu(id);
 		menu.setName(request.name());
@@ -119,7 +118,8 @@ public class MenuController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	@Operation(summary = "메뉴 삭제", description = "menuId로 메뉴를 삭제합니다.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@Operation(summary = "메뉴 삭제", description = "menuId로 메뉴를 삭제합니다")
 	public void deleteMenu(@PathVariable Long id) {
 		Menu menu = fetchMenu(id);
 		menuRepository.delete(menu);

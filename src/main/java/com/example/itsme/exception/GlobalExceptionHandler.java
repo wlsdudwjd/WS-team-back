@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.validation.FieldError;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -49,6 +51,11 @@ public class GlobalExceptionHandler {
 		ApiErrorCode code = mapStatusToErrorCode(status);
 		String message = ex.getReason() != null ? ex.getReason() : ex.getMessage();
 		return buildResponse(code, request, message, null, ex.getStatusCode().value());
+	}
+
+	@ExceptionHandler({ AccessDeniedException.class, AuthorizationDeniedException.class })
+	public ResponseEntity<ApiErrorResponse> handleAccessDenied(Exception ex, HttpServletRequest request) {
+		return buildResponse(ApiErrorCode.FORBIDDEN, request, ex.getMessage(), null, HttpStatus.FORBIDDEN.value());
 	}
 
 	@ExceptionHandler(ResourceNotFoundException.class)

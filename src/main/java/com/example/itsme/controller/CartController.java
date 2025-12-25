@@ -1,8 +1,9 @@
 package com.example.itsme.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,22 +38,26 @@ public class CartController {
 	private final UserRepository userRepository;
 
 	@GetMapping
-	@Operation(summary = "장바구니 목록 조회", description = "사용자 ID/이메일로 해당 사용자의 장바구니 목록을 조회합니다.")
-	public List<Cart> getCarts(@RequestParam(required = false) Long userId,
-			@RequestParam(required = false) String userEmail) {
+	@PreAuthorize("hasAnyRole('ADMIN','USER')")
+	@Operation(summary = "장바구니 목록 조회", description = "사용자 ID/이메일로 해당 사용자의 장바구니 목록을 페이지네이션 조회")
+	public Page<Cart> getCarts(@RequestParam(required = false) Long userId,
+			@RequestParam(required = false) String userEmail,
+			Pageable pageable) {
 		User user = resolveUser(userId, userEmail);
-		return cartRepository.findByUserUserId(user.getUserId());
+		return cartRepository.findByUserUserId(user.getUserId(), pageable);
 	}
 
 	@GetMapping("/{id}")
-	@Operation(summary = "장바구니 단건 조회", description = "cartId로 장바구니를 조회합니다.")
+	@PreAuthorize("hasAnyRole('ADMIN','USER')")
+	@Operation(summary = "장바구니 단건 조회", description = "cartId로 장바구니를 조회합니다")
 	public Cart getCart(@PathVariable Long id) {
 		return fetchCart(id);
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	@Operation(summary = "장바구니 생성", description = "사용자에게 빈 장바구니를 생성합니다.")
+	@PreAuthorize("hasAnyRole('ADMIN','USER')")
+	@Operation(summary = "장바구니 생성", description = "사용자에게 새 장바구니를 생성합니다")
 	public Cart createCart(@Valid @RequestBody CartRequest request) {
 		User user = resolveUser(request.userId(), request.userEmail());
 		Cart cart = Cart.builder()
@@ -63,7 +68,8 @@ public class CartController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	@Operation(summary = "장바구니 삭제", description = "cartId로 장바구니를 삭제합니다.")
+	@PreAuthorize("hasAnyRole('ADMIN','USER')")
+	@Operation(summary = "장바구니 삭제", description = "cartId로 장바구니를 삭제합니다")
 	public void deleteCart(@PathVariable Long id) {
 		Cart cart = fetchCart(id);
 		cartRepository.delete(cart);

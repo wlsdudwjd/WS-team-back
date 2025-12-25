@@ -1,8 +1,9 @@
 package com.example.itsme.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +26,7 @@ import com.example.itsme.repository.OrderItemRepository;
 import com.example.itsme.repository.OrderRepository;
 import com.example.itsme.repository.UserRepository;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +44,8 @@ public class OrderItemController {
 	private final UserRepository userRepository;
 
 	@GetMapping("/{id}")
+	@PreAuthorize("hasAnyRole('ADMIN','USER')")
+	@Operation(summary = "주문상품 단건 조회", description = "orderItemId로 주문상품을 조회(본인 소유 검증)")
 	public OrderItem getOrderItem(@PathVariable Long id,
 			@RequestParam(required = false) Long userId,
 			@RequestParam(required = false) String userEmail) {
@@ -54,19 +58,24 @@ public class OrderItemController {
 	}
 
 	@GetMapping("/order/{orderId}")
-	public List<OrderItem> getItemsByOrder(@PathVariable Long orderId,
+	@PreAuthorize("hasAnyRole('ADMIN','USER')")
+	@Operation(summary = "주문별 상품 조회", description = "orderId로 주문상품 목록을 페이지네이션 조회(본인 소유 검증)")
+	public Page<OrderItem> getItemsByOrder(@PathVariable Long orderId,
 			@RequestParam(required = false) Long userId,
-			@RequestParam(required = false) String userEmail) {
+			@RequestParam(required = false) String userEmail,
+			Pageable pageable) {
 		Order order = fetchOrder(orderId);
 		User user = resolveUser(userId, userEmail);
 		if (!order.getUser().getUserId().equals(user.getUserId())) {
 			throw new ResourceNotFoundException("Order not found for user");
 		}
-		return orderItemRepository.findByOrderOrderId(orderId);
+		return orderItemRepository.findByOrderOrderId(orderId, pageable);
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
+	@PreAuthorize("hasAnyRole('ADMIN','USER')")
+	@Operation(summary = "주문상품 생성", description = "주문/메뉴/수량으로 주문상품을 생성합니다")
 	public OrderItem createOrderItem(@Valid @RequestBody OrderItemCreateRequest request) {
 		Order order = fetchOrder(request.orderId());
 		Menu menu = fetchMenu(request.menuId());
@@ -81,6 +90,8 @@ public class OrderItemController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@PreAuthorize("hasAnyRole('ADMIN','USER')")
+	@Operation(summary = "주문상품 삭제", description = "orderItemId로 주문상품을 삭제합니다")
 	public void deleteOrderItem(@PathVariable Long id) {
 		OrderItem item = fetchOrderItem(id);
 		orderItemRepository.delete(item);

@@ -1,8 +1,9 @@
 package com.example.itsme.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,23 +39,24 @@ public class MenuCategoryController {
 	private final ServiceTypeRepository serviceTypeRepository;
 
 	@GetMapping
-	@Operation(summary = "카테고리 목록 조회", description = "서비스 타입별 또는 전체 메뉴 카테고리를 조회합니다.")
-	public List<MenuCategory> getCategories(@RequestParam(required = false) Long serviceTypeId) {
+	@Operation(summary = "카테고리 목록 조회", description = "서비스타입별 카테고리를 페이지네이션 조회")
+	public Page<MenuCategory> getCategories(@RequestParam(required = false) Long serviceTypeId, Pageable pageable) {
 		if (serviceTypeId == null) {
-			return menuCategoryRepository.findAll();
+			return menuCategoryRepository.findAll(pageable);
 		}
-		return menuCategoryRepository.findByServiceTypeServiceTypeId(serviceTypeId);
+		return menuCategoryRepository.findByServiceTypeServiceTypeId(serviceTypeId, pageable);
 	}
 
 	@GetMapping("/{id}")
-	@Operation(summary = "카테고리 단건 조회", description = "menuCategoryId로 카테고리 상세를 조회합니다.")
+	@Operation(summary = "카테고리 단건 조회", description = "menuCategoryId로 카테고리를 조회합니다")
 	public MenuCategory getCategory(@PathVariable Long id) {
 		return fetchCategory(id);
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	@Operation(summary = "카테고리 생성", description = "서비스 타입에 속한 새 카테고리를 등록합니다.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@Operation(summary = "카테고리 생성", description = "서비스타입에 연결된 새 카테고리를 생성합니다")
 	public MenuCategory createCategory(@Valid @RequestBody MenuCategoryRequest request) {
 		ServiceType serviceType = fetchServiceType(request.serviceTypeId());
 		MenuCategory category = MenuCategory.builder()
@@ -65,7 +67,8 @@ public class MenuCategoryController {
 	}
 
 	@PutMapping("/{id}")
-	@Operation(summary = "카테고리 수정", description = "카테고리 이름과 서비스 타입을 변경합니다.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@Operation(summary = "카테고리 수정", description = "카테고리 이름/서비스타입을 수정합니다.")
 	public MenuCategory updateCategory(@PathVariable Long id, @Valid @RequestBody MenuCategoryRequest request) {
 		MenuCategory category = fetchCategory(id);
 		ServiceType serviceType = fetchServiceType(request.serviceTypeId());
@@ -76,7 +79,8 @@ public class MenuCategoryController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	@Operation(summary = "카테고리 삭제", description = "menuCategoryId로 카테고리를 삭제합니다.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@Operation(summary = "카테고리 삭제", description = "menuCategoryId로 카테고리를 삭제합니다")
 	public void deleteCategory(@PathVariable Long id) {
 		MenuCategory category = fetchCategory(id);
 		menuCategoryRepository.delete(category);

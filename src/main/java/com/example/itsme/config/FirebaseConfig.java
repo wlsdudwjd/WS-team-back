@@ -9,6 +9,7 @@ import java.util.Base64;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.util.StringUtils;
 
 import com.google.auth.oauth2.GoogleCredentials;
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 @EnableConfigurationProperties(FirebaseProperties.class)
 @RequiredArgsConstructor
+@Profile("!test")
 public class FirebaseConfig {
 
 	private final FirebaseProperties firebaseProperties;

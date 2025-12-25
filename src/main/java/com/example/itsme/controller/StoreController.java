@@ -1,8 +1,9 @@
 package com.example.itsme.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,23 +39,24 @@ public class StoreController {
 	private final ServiceTypeRepository serviceTypeRepository;
 
 	@GetMapping
-	@Operation(summary = "매장 목록 조회", description = "서비스 타입별 또는 전체 매장을 조회합니다.")
-	public List<Store> getStores(@RequestParam(required = false) Long serviceTypeId) {
+	@Operation(summary = "매장 목록 조회", description = "서비스타입별 매장 목록을 페이지네이션 조회")
+	public Page<Store> getStores(@RequestParam(required = false) Long serviceTypeId, Pageable pageable) {
 		if (serviceTypeId == null) {
-			return storeRepository.findAll();
+			return storeRepository.findAll(pageable);
 		}
-		return storeRepository.findByServiceTypeServiceTypeId(serviceTypeId);
+		return storeRepository.findByServiceTypeServiceTypeId(serviceTypeId, pageable);
 	}
 
 	@GetMapping("/{id}")
-	@Operation(summary = "매장 단건 조회", description = "storeId로 매장을 조회합니다.")
+	@Operation(summary = "매장 단건 조회", description = "storeId로 매장을 조회합니다")
 	public Store getStore(@PathVariable Long id) {
 		return fetchStore(id);
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	@Operation(summary = "매장 생성", description = "서비스 타입에 속한 매장을 등록합니다.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@Operation(summary = "매장 생성", description = "서비스타입에 매장을 등록합니다")
 	public Store createStore(@Valid @RequestBody StoreRequest request) {
 		ServiceType serviceType = fetchServiceType(request.serviceTypeId());
 		Store store = Store.builder()
@@ -65,7 +67,8 @@ public class StoreController {
 	}
 
 	@PutMapping("/{id}")
-	@Operation(summary = "매장 수정", description = "storeId로 매장 이름/서비스 타입을 수정합니다.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@Operation(summary = "매장 수정", description = "storeId로 매장 이름/서비스타입을 수정합니다")
 	public Store updateStore(@PathVariable Long id, @Valid @RequestBody StoreRequest request) {
 		Store store = fetchStore(id);
 		ServiceType serviceType = fetchServiceType(request.serviceTypeId());
@@ -76,7 +79,8 @@ public class StoreController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	@Operation(summary = "매장 삭제", description = "storeId로 매장을 삭제합니다.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@Operation(summary = "매장 삭제", description = "storeId로 매장을 삭제합니다")
 	public void deleteStore(@PathVariable Long id) {
 		Store store = fetchStore(id);
 		storeRepository.delete(store);

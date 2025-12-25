@@ -1,15 +1,15 @@
 package com.example.itsme.repository;
 
-import java.util.List;
-
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.example.itsme.domain.Order;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
-	List<Order> findByUserUserId(Long userId);
+	Page<Order> findByUserUserId(Long userId, Pageable pageable);
 
-	List<Order> findByStoreStoreId(Long storeId);
+	Page<Order> findByStoreStoreId(Long storeId, Pageable pageable);
 
-	List<Order> findByUserUserIdAndStoreStoreId(Long userId, Long storeId);
+	Page<Order> findByUserUserIdAndStoreStoreId(Long userId, Long storeId, Pageable pageable);
 }

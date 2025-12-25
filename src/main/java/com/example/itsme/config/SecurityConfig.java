@@ -13,6 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.example.itsme.security.JwtAuthenticationFilter;
+import com.example.itsme.security.RateLimitFilter;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,7 +22,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-	private final JwtAuthenticationFilter jwtAuthenticationFilter;
+private final JwtAuthenticationFilter jwtAuthenticationFilter;
+	private final RateLimitFilter rateLimitFilter;
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -58,7 +60,8 @@ public class SecurityConfig {
 						// 나머지 API는 인증 필요
 						.requestMatchers("/api/**").authenticated()
 						// 기타는 SPA forward를 위해 허용
-						.anyRequest().permitAll())
+				.anyRequest().permitAll())
+				.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 		return http.build();
 	}

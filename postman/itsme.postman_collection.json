@@ -1,0 +1,200 @@
+{
+  "info": {
+    "_postman_id": "1a2b3c4d-itsme-collection",
+    "name": "Itsme API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth - Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.environment.set(\"accessToken\", json.accessToken);",
+              "pm.environment.set(\"refreshToken\", json.refreshToken);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth - Refresh",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api", "auth", "refresh"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.environment.set(\"accessToken\", json.accessToken);",
+              "pm.environment.set(\"refreshToken\", json.refreshToken);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Menus - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/menus?page=0&size=20", "host": ["{{baseUrl}}"], "path": ["api", "menus"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "exec": [ "pm.test(\"status 200\", () => pm.response.to.have.status(200));" ], "type": "text/javascript" }
+        }
+      ]
+    },
+    {
+      "name": "Stores - Create (ADMIN)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/stores", "host": ["{{baseUrl}}"], "path": ["api", "stores"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Cafe A\",\n  \"serviceTypeId\": 1\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"created\", () => pm.response.to.have.status(201));",
+              "pm.test(\"id present\", () => pm.expect(pm.response.json().storeId).to.be.ok);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users - List (no token, expect 401)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status 401\", () => pm.response.to.have.status(401));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users - List (ADMIN)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status 200|403\", () => pm.expect([200,403]).to.include(pm.response.code));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Menus - Create (USER forbidden)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/menus", "host": ["{{baseUrl}}"], "path": ["api", "menus"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Test Menu\",\n  \"price\": 1000,\n  \"description\": \"desc\",\n  \"storeId\": 1,\n  \"categoryId\": 1\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "exec": [ "pm.test(\"status 403\", () => pm.response.to.have.status(403));" ], "type": "text/javascript" }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "exec": [ "pm.test(\"status 200\", () => pm.response.to.have.status(200));" ], "type": "text/javascript" }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": { "exec": [], "type": "text/javascript" }
+    },
+    {
+      "listen": "test",
+      "script": { "exec": [], "type": "text/javascript" }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "userEmail", "value": "user@example.com" },
+    { "key": "userPassword", "value": "password" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" }
+  ]
+}

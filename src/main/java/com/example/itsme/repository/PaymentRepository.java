@@ -1,13 +1,13 @@
 package com.example.itsme.repository;
 
-import java.util.List;
-
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.example.itsme.domain.Payment;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
-	List<Payment> findByUserUserId(Long userId);
+	Page<Payment> findByUserUserId(Long userId, Pageable pageable);
 
-	List<Payment> findByOrderOrderId(Long orderId);
+	Page<Payment> findByOrderOrderId(Long orderId, Pageable pageable);
 }

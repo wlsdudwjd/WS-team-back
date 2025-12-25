@@ -1,0 +1,11 @@
+# DB Schema (Draft)
+- users (user_id, email*, username, password, role, name, phone)
+- stores (store_id, name, service_type_id)
+- service_types (service_type_id, name)
+- menu_categories (menu_category_id, name, service_type_id)
+- menus (menu_id, name, price, description, store_id, menu_category_id)
+- carts (cart_id, user_id)
+- cart_items (cart_item_id, cart_id, menu_id, quantity)
+- orders (order_id, user_id, store_id, status, total_price)
+- order_items (order_item_id, order_id, menu_id, quantity, unit_price)
+- coupons, user_coupons, notifications, payments, menu_likes

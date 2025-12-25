@@ -13,12 +13,15 @@ import com.example.itsme.dto.AuthResponse;
 import com.example.itsme.dto.JwtAuthResponse;
 import com.example.itsme.dto.FirebaseLoginRequest;
 import com.example.itsme.dto.LoginRequest;
+import com.example.itsme.dto.GoogleLoginRequest;
 import com.example.itsme.dto.RefreshTokenRequest;
 import com.example.itsme.dto.UserRequest;
 import com.example.itsme.exception.ResourceNotFoundException;
 import com.example.itsme.repository.UserRepository;
 import com.example.itsme.service.FirebaseAuthService;
 import com.example.itsme.service.FirebaseUser;
+import com.example.itsme.service.GoogleTokenVerifier;
+import com.example.itsme.service.GoogleTokenVerifier.GoogleUser;
 import com.example.itsme.service.PasswordService;
 import com.example.itsme.security.JwtTokenProvider;
 
@@ -35,6 +38,7 @@ public class AuthController {
 
 	private final UserRepository userRepository;
 	private final FirebaseAuthService firebaseAuthService;
+	private final GoogleTokenVerifier googleTokenVerifier;
 	private final PasswordService passwordService;
 	private final JwtTokenProvider jwtTokenProvider;
 
@@ -125,6 +129,22 @@ public class AuthController {
 				accessToken, refreshToken);
 	}
 
+	@PostMapping("/google-login")
+	@ResponseStatus(HttpStatus.OK)
+	@Operation(summary = "Login with Google ID token", description = "Verifies Google ID token, syncs user in DB, and returns profile.")
+	public JwtAuthResponse googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
+		GoogleUser googleUser = googleTokenVerifier.verify(request.idToken());
+		if (googleUser.email() == null || googleUser.email().isBlank()) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Google token missing email");
+		}
+		User user = userRepository.findByEmail(googleUser.email())
+				.orElseGet(() -> createUserFromGoogle(googleUser));
+		String accessToken = jwtTokenProvider.generateAccessToken(user);
+		String refreshToken = jwtTokenProvider.generateRefreshToken(user);
+		return JwtAuthResponse.of(user.getUserId(), user.getUsername(), user.getEmail(), user.getName(), user.getRole(),
+				accessToken, refreshToken);
+	}
+
 	@PostMapping("/refresh")
 	@ResponseStatus(HttpStatus.OK)
 	@Operation(summary = "Refresh access token", description = "Issues a new access token using a valid refresh token.")
@@ -175,6 +195,23 @@ public class AuthController {
 				.password(passwordService.hash("firebase")) // Firebase manages credentials
 				.name(nameToUse)
 				.phone(phoneToUse)
+				.role(com.example.itsme.domain.Role.USER)
+				.build();
+		return userRepository.save(newUser);
+	}
+
+	private User createUserFromGoogle(GoogleUser googleUser) {
+		String email = googleUser.email();
+		String username = email != null && email.contains("@")
+				? email.substring(0, email.indexOf("@"))
+				: "google_" + googleUser.sub();
+		String name = googleUser.name() != null ? googleUser.name() : username;
+
+		User newUser = User.builder()
+				.email(email)
+				.username(username)
+				.password(passwordService.hash("google"))
+				.name(name)
 				.role(com.example.itsme.domain.Role.USER)
 				.build();
 		return userRepository.save(newUser);
