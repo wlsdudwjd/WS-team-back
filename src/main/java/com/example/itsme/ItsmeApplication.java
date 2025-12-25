@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.servers.Server;
 				version = "v1",
 				description = "Campus ordering backend: email/Firebase 로그인, 메뉴·주문·쿠폰·결제 관리"),
 		servers = {
-				@Server(url = "http://localhost:8080", description = "Local"),
 				@Server(url = "http://113.198.66.68:10086", description = "Public")
 		}
 )

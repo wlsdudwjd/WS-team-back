@@ -71,6 +71,13 @@ java -jar build/libs/*SNAPSHOT.jar
 - 레이트리밋: Redis 기반, 기본 100 req / 60s (환경변수로 조정)
 - 에러 스키마: `ApiErrorResponse { timestamp, path, status, code, message, details }`
 
+## Swagger 사용법 (JWT 필요 엔드포인트)
+1) Swagger 접속: `http://<host>:<port>/swagger-ui/index.html`
+2) 토큰 발급: `POST /api/auth/signup`호출 → 응답의 `accessToken` 확인
+3) 인증 설정: Swagger 우측 상단 `Authorize` 클릭 → 값에 `Bearer <accessToken>` 입력 후 `Authorize`
+4) 이후 `/api/**` 엔드포인트 `Try it out` 시 401/403 없이 호출 가능 (관리자 전용은 ADMIN 계정/토큰 필요)
+5) 토큰 만료 시: `POST /api/auth/refresh`로 새 토큰 발급 후 다시 Authorize
+
 ## Postman
 - 컬렉션: `postman/itsme.postman_collection.json`
 - 환경변수: `baseUrl`, `userEmail`, `userPassword`, `accessToken`, `refreshToken`
@@ -90,21 +97,10 @@ java -jar build/libs/*SNAPSHOT.jar
   ```
 
 ## 배포 (JCloud 수동 가이드)
-1) 서버에 Docker/Compose 설치
-2) `.env` 업로드(비밀키 포함, 커밋 금지)
-3) `docker compose up -d --build` 실행 후 `docker compose logs -f app`
-4) 방화벽에서 `SERVER_PORT`(기본 8080) 오픈
-5) 헬스: `curl http://<ip>:<port>/health` -> 200
-6) Swagger: `http://<ip>:<port>/swagger-ui/index.html`
-7) Postman: `baseUrl`을 `<ip>:<port>`로 설정
-8) 제출용 스크린샷: 헬스 200, Swagger UI
-
-## Git 히스토리 비밀값 정리 (BFG)
-1) 백업 후 클린 브랜치 준비
-2) `java -jar bfg.jar --replace-text replacements.txt .`
-3) `git reflog expire --expire=now --all && git gc --prune=now --aggressive`
-4) `git push --force`
-5) 실제 `.env`는 안전한 채널로만 전달
+1) `/gradlew -x test build` 실행 후 `scp -i ~/term.pem -P 19086 build/libs/itsme-0.0.1-SNAPSHOT.jar ubuntu@113.198.66.68:~/deploy/itsme/app.jar` (term.pem은 경로에 맞춰 주셔야 합니다.)
+2) 서버에 Docker 설치
+3) 서버 접속 후 `cd deploy/itsme` 이동
+4) `docker compose up -d --build` 실행
 
 ## 테스트
 - 실행: `./gradlew test` (H2 + Firebase 모킹, `test` 프로파일)

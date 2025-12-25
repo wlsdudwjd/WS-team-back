@@ -11,9 +11,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import jakarta.servlet.http.HttpServletResponse;
 
+import com.example.itsme.dto.ApiErrorResponse;
+import com.example.itsme.exception.ApiErrorCode;
 import com.example.itsme.security.JwtAuthenticationFilter;
 import com.example.itsme.security.RateLimitFilter;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,6 +31,7 @@ public class SecurityConfig {
 
 private final JwtAuthenticationFilter jwtAuthenticationFilter;
 	private final RateLimitFilter rateLimitFilter;
+	private final ObjectMapper objectMapper;
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -31,6 +39,9 @@ private final JwtAuthenticationFilter jwtAuthenticationFilter;
 				.csrf(csrf -> csrf.disable())
 				.cors(Customizer.withDefaults())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.exceptionHandling(ex -> ex
+						.authenticationEntryPoint(authenticationEntryPoint())
+						.accessDeniedHandler(accessDeniedHandler()))
 				.authorizeHttpRequests(auth -> auth
 						// 공개 엔드포인트
 						.requestMatchers(
@@ -64,6 +75,25 @@ private final JwtAuthenticationFilter jwtAuthenticationFilter;
 				.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 		return http.build();
+	}
+
+	private AuthenticationEntryPoint authenticationEntryPoint() {
+		return (request, response, authException) -> writeError(response, request.getRequestURI(),
+				ApiErrorCode.UNAUTHORIZED);
+	}
+
+	private AccessDeniedHandler accessDeniedHandler() {
+		return (request, response, accessDeniedException) -> writeError(response, request.getRequestURI(),
+				ApiErrorCode.FORBIDDEN);
+	}
+
+	private void writeError(HttpServletResponse response, String path, ApiErrorCode code)
+			throws java.io.IOException {
+		ApiErrorResponse body = ApiErrorResponse.of(path, code.getStatus().value(), code.getCode(),
+				code.getDefaultMessage(), null);
+		response.setStatus(code.getStatus().value());
+		response.setContentType("application/json");
+		objectMapper.writeValue(response.getOutputStream(), body);
 	}
 
 	@Bean
