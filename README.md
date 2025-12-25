@@ -1,103 +1,111 @@
-# Itsme Backend
+# Itsme 백엔드
 
-Spring Boot 3.5 API server (MySQL, Redis, JWT with Firebase/Google login).
+Spring Boot 3.5 기반 API 서버 (MySQL, Redis, JWT + Firebase/Google 로그인).
+캠퍼스 주문(매장/메뉴/주문/결제/쿠폰/알림) 기능을 제공하며 JWT 기반 인증/인가와 Swagger 문서를 포함합니다.
 
-## Quickstart
-### Docker (recommended)
+## 빠른 실행
+### Docker (권장)
 ```bash
 docker compose up -d --build
 ```
-- Port: `8080` (override with `SERVER_PORT`)
-- Health: `GET /health`
-- Swagger: `http://localhost:8080/swagger-ui/index.html`
+- 기본 포트: `8080` (`SERVER_PORT`로 변경 가능)
+- 헬스체크: `GET /health`
+- Swagger: `http://localhost:8080/swagger-ui/index.html` (배포 후 `http://<jcloud-ip>:<port>/swagger-ui/index.html`)
+- API Root: `/api` (예: `http://localhost:8080/api`)
 
-### Local run
+### 로컬 실행
 ```bash
 ./gradlew bootRun
 ```
-MySQL/Redis must be running (e.g., `docker compose up db redis`).
+MySQL/Redis가 먼저 떠 있어야 합니다(`docker compose up db redis` 권장).
+또는 빌드/실행:
+```bash
+./gradlew clean build
+java -jar build/libs/*SNAPSHOT.jar
+```
 
-## Environment (.env.example)
+## 환경변수 (.env.example 참고)
 - DB: `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `SPRING_DATASOURCE_URL`
 - Redis: `REDIS_HOST`, `REDIS_PORT`
 - JWT: `JWT_SECRET`, `JWT_ACCESS_EXPIRATION_MS`, `JWT_REFRESH_EXPIRATION_MS`
-- Firebase: `FIREBASE_CREDENTIALS_BASE64` or `FIREBASE_CREDENTIALS_PATH`
+- Firebase: `FIREBASE_CREDENTIALS_BASE64` 또는 `FIREBASE_CREDENTIALS_PATH`
 - Google: `GOOGLE_CLIENT_ID`
 - RateLimit: `RATE_LIMIT_ENABLED`, `RATE_LIMIT_REQUESTS`, `RATE_LIMIT_WINDOW_SECONDS`
 
-## Sample Accounts (for testing/demo)
+## 샘플 계정(테스트용)
 - ADMIN: `admin@example.com / adminpass`
 - USER: `user1@example.com / password`
 
-## Auth / RBAC
-- Login: email/password (`POST /api/auth/login`), Firebase ID token (`/api/auth/firebase-login`), Google ID token (`/api/auth/google-login`)
-- Refresh: `POST /api/auth/refresh`
-- Roles
-  - ADMIN: full management (users/stores/categories/menus/coupons/payments delete/create, etc.)
-  - USER: own orders/carts/notifications/payments; public lists
+## 인증/인가
+- 로그인: 이메일/비밀번호(`POST /api/auth/login`), Firebase ID 토큰(`POST /api/auth/firebase-login`), Google ID 토큰(`POST /api/auth/google-login`)
+- 토큰 재발급: `POST /api/auth/refresh`
+- 역할
+  - ADMIN: 사용자/매장/카테고리/메뉴/쿠폰/결제 삭제·생성 등 관리 기능
+  - USER: 자신의 주문/장바구니/알림/결제, 공개 목록 조회
 
-## Endpoint & Role Summary (major)
-| URL | Method | Description | Role |
+## 주요 엔드포인트 (요약)
+| URL | Method | 설명 | 권한 |
 | --- | --- | --- | --- |
-| /health | GET | Health check | Public |
-| /api/auth/login | POST | Email/password login | Public |
-| /api/auth/refresh | POST | Refresh token | Public |
-| /api/auth/firebase-login | POST | Firebase login | Public |
-| /api/auth/google-login | POST | Google login | Public |
-| /api/users | GET/POST | List/create users | ADMIN |
-| /api/users/{id} | GET/PUT/DELETE | Get/update/delete user | USER (self) / ADMIN |
-| /api/stores | GET | List stores | Public |
-| /api/stores | POST/PUT/DELETE | Manage stores | ADMIN |
-| /api/menu-categories | GET | List categories | Public |
-| /api/menu-categories | POST/PUT/DELETE | Manage categories | ADMIN |
-| /api/menus | GET | List/search menus (pagination) | Public |
-| /api/menus | POST/PUT/DELETE | Manage menus | ADMIN |
-| /api/orders | GET/POST | List/create orders | USER/ADMIN |
-| /api/orders/{id}/status | PUT | Update order status | USER/ADMIN |
-| /api/payments | GET/POST | Payments | USER/ADMIN |
-| /api/coupons | GET | Coupons | USER/ADMIN |
-| /api/coupons | POST/PUT/DELETE | Manage coupons | ADMIN |
-| /api/notifications | GET/POST/DELETE | Notifications | USER/ADMIN |
+| /health | GET | 헬스체크 | 공개 |
+| /api/auth/login | POST | 이메일/비밀번호 로그인 | 공개 |
+| /api/auth/refresh | POST | 토큰 재발급 | 공개 |
+| /api/auth/firebase-login | POST | Firebase 로그인 | 공개 |
+| /api/auth/google-login | POST | Google 로그인 | 공개 |
+| /api/users | GET/POST | 사용자 목록/생성 | ADMIN |
+| /api/users/{id} | GET/PUT/DELETE | 사용자 조회/수정/삭제 | USER(본인)/ADMIN |
+| /api/stores | GET | 매장 목록 | 공개 |
+| /api/stores | POST/PUT/DELETE | 매장 관리 | ADMIN |
+| /api/menu-categories | GET | 카테고리 목록 | 공개 |
+| /api/menu-categories | POST/PUT/DELETE | 카테고리 관리 | ADMIN |
+| /api/menus | GET | 메뉴 조회/검색/페이지네이션 | 공개 |
+| /api/menus | POST/PUT/DELETE | 메뉴 관리 | ADMIN |
+| /api/orders | GET/POST | 주문 조회/생성 | USER/ADMIN |
+| /api/orders/{id}/status | PUT | 주문 상태 변경 | USER/ADMIN |
+| /api/payments | GET/POST | 결제 조회/생성 | USER/ADMIN |
+| /api/coupons | GET | 쿠폰 조회 | USER/ADMIN |
+| /api/coupons | POST/PUT/DELETE | 쿠폰 관리 | ADMIN |
+| /api/notifications | GET/POST/DELETE | 알림 조회/생성/삭제 | USER/ADMIN |
 
-## Global features
-- Swagger/OpenAPI via springdoc; JWT bearer scheme and common error responses (400/401/403/404/422/429/500) auto-applied to `/api/**` (except auth)
-- Rate limit: Redis-based, default 100 req / 60s (configurable)
-- Error schema: `ApiErrorResponse { timestamp, path, status, code, message, details }`
+## 공통 기능
+- Swagger(OpenAPI, springdoc): `/api/**`(auth 제외)에 JWT bearer 보안 적용, 공통 에러 응답(400/401/403/404/422/429/500) 자동 추가
+- 레이트리밋: Redis 기반, 기본 100 req / 60s (환경변수로 조정)
+- 에러 스키마: `ApiErrorResponse { timestamp, path, status, code, message, details }`
 
 ## Postman
-- Collection: `postman/itsme.postman_collection.json`
-- Env vars: `baseUrl`, `userEmail`, `userPassword`, `accessToken`, `refreshToken`
+- 컬렉션: `postman/itsme.postman_collection.json`
+- 환경변수: `baseUrl`, `userEmail`, `userPassword`, `accessToken`, `refreshToken`
 
-## Migrations / Seed
-- Flyway SQL: `migrations/V1__init.sql` (schema snapshot)
-  - Run:  
-    ```bash
-    ./gradlew flywayMigrate \
-      -Dflyway.url=jdbc:mysql://db:3306/itsme \
-      -Dflyway.user=$MYSQL_USER \
-      -Dflyway.password=$MYSQL_PASSWORD \
-      -Dflyway.locations=filesystem:./migrations
-    ```
-- Seed data: `seed/seed.sql` (200+ rows; clears FKs then inserts users/stores/categories/menus/carts/orders/payments/notifications/coupons)
-  - Apply: `mysql -h <host> -u <user> -p<pass> itsme < seed/seed.sql`
+## 마이그레이션 / 시드
+- Flyway SQL: `migrations/V1__init.sql` (스키마 스냅샷)
+  ```bash
+  ./gradlew flywayMigrate \
+    -Dflyway.url=jdbc:mysql://db:3306/itsme \
+    -Dflyway.user=$MYSQL_USER \
+    -Dflyway.password=$MYSQL_PASSWORD \
+    -Dflyway.locations=filesystem:./migrations
+  ```
+- 시드: `seed/seed.sql` (200+ 데이터, FK 초기화 후 삽입)
+  ```bash
+  mysql -h <host> -u <user> -p<pass> itsme < seed/seed.sql
+  ```
 
-## Deployment (JCloud guide, manual)
-1) Install Docker/Compose on server.
-2) Copy `.env` (do not commit secrets).
-3) `docker compose up -d --build` then `docker compose logs -f app`.
-4) Open firewall/security group for `SERVER_PORT` (default 8080).
-5) Health check: `curl http://<ip>:<port>/health` -> 200.
-6) Swagger: `http://<ip>:<port>/swagger-ui/index.html`.
-7) Postman: set `baseUrl` to `<ip>:<port>`.
-8) Submission: capture screenshots (health 200, Swagger UI).
+## 배포 (JCloud 수동 가이드)
+1) 서버에 Docker/Compose 설치
+2) `.env` 업로드(비밀키 포함, 커밋 금지)
+3) `docker compose up -d --build` 실행 후 `docker compose logs -f app`
+4) 방화벽에서 `SERVER_PORT`(기본 8080) 오픈
+5) 헬스: `curl http://<ip>:<port>/health` -> 200
+6) Swagger: `http://<ip>:<port>/swagger-ui/index.html`
+7) Postman: `baseUrl`을 `<ip>:<port>`로 설정
+8) 제출용 스크린샷: 헬스 200, Swagger UI
 
-## Git history secret cleanup (BFG)
-1) Backup repo, check out clean branch.
-2) Run: `java -jar bfg.jar --replace-text replacements.txt .`
+## Git 히스토리 비밀값 정리 (BFG)
+1) 백업 후 클린 브랜치 준비
+2) `java -jar bfg.jar --replace-text replacements.txt .`
 3) `git reflog expire --expire=now --all && git gc --prune=now --aggressive`
-4) Force push: `git push --force`
-5) Deliver real `.env` only via secure channel.
+4) `git push --force`
+5) 실제 `.env`는 안전한 채널로만 전달
 
-## Tests
-- Run: `./gradlew test` (uses H2 + mocked Firebase, active profile `test`).
-- Coverage: MockMvc integration/RBAC/auth flows; total 20+ test cases.
+## 테스트
+- 실행: `./gradlew test` (H2 + Firebase 모킹, `test` 프로파일)
+- MockMvc 통합/RBAC/auth 포함 20+ 케이스
