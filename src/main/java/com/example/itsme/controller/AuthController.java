@@ -78,13 +78,15 @@ public class AuthController {
 		}
 
 		var role = request.role() != null ? request.role() : com.example.itsme.domain.Role.USER;
+		// 전화번호 유니크 제약 완화: 미입력/공백은 null로 저장하여 충돌 방지
+		String normalizedPhone = (request.phone() == null || request.phone().isBlank()) ? null : request.phone();
 
 		User user = User.builder()
 				.email(request.email())
 				.username(request.username())
 				.password(passwordService.hash(request.password()))
 				.name(request.name())
-				.phone(request.phone())
+				.phone(normalizedPhone)
 				.role(role)
 				.build();
 
