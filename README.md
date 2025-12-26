@@ -112,8 +112,10 @@ docker compose up -d --build
 - 실행: `./gradlew test` (H2 + Firebase 모킹, `test` 프로파일)
 - MockMvc 통합/RBAC/auth 포함 20+ 케이스
 
-## 사용설명서
+## 헬스체크 스크린샷
+![health.png](screenshot/health.png)
 
+## 사용설명서
 ![img.png](screenshot/img.png)
 1. 회원가입 화면입니다. 이메일 혹은 구글 계정으로 회원을 만들어 로그인 할 수 있습니다.
 
