@@ -98,15 +98,13 @@ docker compose up -d --build
     -Dflyway.locations=filesystem:./migrations
   ```
 - 시드: `seed/seed.sql` (200+ 데이터, FK 초기화 후 삽입)
-  ```bash
-  mysql -h <host> -u <user> -p<pass> itsme < seed/seed.sql
-  ```
 
 ## 서버 배포
 1) 로컬에서 `/gradlew -x test build` 실행 후 `scp -i ~/term.pem -P 19086 build/libs/itsme-0.0.1-SNAPSHOT.jar ubuntu@113.198.66.68:~/deploy/itsme/app.jar` (term.pem은 경로에 맞춰 주셔야 합니다.)
 2) 서버에 Docker 설치
 3) 서버 접속 후 `cd deploy/itsme` 이동
-4) `sudo docker compose up -d --build` 실행
+4) `sudo docker compose up -d --build` 실행<br>
+(deploy/itsme에도 .env, docker-compose.yml, Dockerfile이 있어야 합니다.)
 
 ## 테스트
 - 실행: `./gradlew test` (H2 + Firebase 모킹, `test` 프로파일)
