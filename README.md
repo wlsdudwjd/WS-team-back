@@ -14,7 +14,16 @@ Spring Boot + Vue 기반 학식, 카페 주문 웹사이트입니다.
 - Swagger 주소: http://localhost:8080/swagger-ui/index.html
 - 헬스 체크: http://localhost:8080/health
 
+### 참고
+- 프론트 repo : https://github.com/wlsdudwjd/WS-team
+
 ### 로컬 실행
+- 자바 jdk 21버전이 필요합니다
+```bash
+sudo apt update
+sudo apt install openjdk-21-jdk
+```
+
 ```bash
 ./gradlew bootJar -x test
 cp build/libs/*SNAPSHOT.jar ./app.jar
@@ -28,10 +37,6 @@ docker compose up -d --build
 - Firebase: `FIREBASE_CREDENTIALS_BASE64` 또는 `FIREBASE_CREDENTIALS_PATH`
 - Google: `GOOGLE_CLIENT_ID`
 - RateLimit: `RATE_LIMIT_ENABLED`, `RATE_LIMIT_REQUESTS`, `RATE_LIMIT_WINDOW_SECONDS`
-
-## 샘플 계정(테스트용)
-- ADMIN: `admin@example.com / adminpass`
-- USER: `user1@example.com / password`
 
 ## 인증/인가
 - 로그인: 이메일/비밀번호(`POST /api/auth/login`), Firebase ID 토큰(`POST /api/auth/firebase-login`), Google ID 토큰(`POST /api/auth/google-login`)
@@ -68,8 +73,12 @@ docker compose up -d --build
 - 레이트리밋: Redis 기반, 기본 100 req / 60s (환경변수로 조정)
 - 에러 스키마: `ApiErrorResponse { timestamp, path, status, code, message, details }`
 
+## 샘플 계정(Swagger 테스트용)
+- ADMIN: `admin@example.com / adminpass`
+- USER: `user@example.com / password`
+
 ## Swagger 사용법 (JWT 필요 엔드포인트)
-1) Swagger 접속: `http://<host>:<port>/swagger-ui/index.html`
+1) Swagger 접속: `http://113.198.66.68:10086/swagger-ui/index.html`
 2) 토큰 발급: `POST /api/auth/signup`호출 → 응답의 `accessToken` 확인
 3) 인증 설정: Swagger 우측 상단 `Authorize` 클릭 → 값에 `Bearer <accessToken>` 입력 후 `Authorize`
 4) 이후 `/api/**` 엔드포인트 `Try it out` 시 401/403 없이 호출 가능 (관리자 전용은 ADMIN 계정/토큰 필요)
@@ -93,7 +102,7 @@ docker compose up -d --build
   mysql -h <host> -u <user> -p<pass> itsme < seed/seed.sql
   ```
 
-## 배포 (JCloud 수동 가이드)
+## 서버 배포
 1) 로컬에서 `/gradlew -x test build` 실행 후 `scp -i ~/term.pem -P 19086 build/libs/itsme-0.0.1-SNAPSHOT.jar ubuntu@113.198.66.68:~/deploy/itsme/app.jar` (term.pem은 경로에 맞춰 주셔야 합니다.)
 2) 서버에 Docker 설치
 3) 서버 접속 후 `cd deploy/itsme` 이동
@@ -118,7 +127,7 @@ docker compose up -d --build
 4. 메뉴 화면입니다. 다양한 메뉴를 확인 하실 수 있습니다.
 
 ![img_4.png](screenshot/img_4.png)
-5. ㅂ
+5. 메뉴 주문 화면입니다. 장바구니에 담거나 바로 주문 하실 수 있습니다.
 
 ![img_5.png](screenshot/img_5.png)
 6. 장바구니 화면입니다. 화면 오른쪽 위 장바구니 모양을 통해 장바구니에 담긴 메뉴를 확인 할 수 있습니다.
@@ -143,3 +152,8 @@ docker compose up -d --build
 
 ![img_12.png](screenshot/img_12.png)
 13. 더보기 화면입니다. 나의 계정 정보를 확인 할 수 있고, 프로필 관리와 로그아웃을 할 수 있습니다.
+
+## 한계 및 개선사항
+- Refresh 토큰 저장/블랙리스트가 없어 탈취 시 무효화 어려움 → DB/Redis 저장 및 로테이션, 로그아웃 시 폐기.
+- JWT 시크릿/환경변수 관리 고도화 필요 → KMS/Secrets Manager 사용, 프로파일별 분리.
+- 실제 결제 기능 미구현
